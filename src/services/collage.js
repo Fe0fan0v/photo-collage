@@ -159,22 +159,28 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
 /**
  * Draw two face halves side by side in oval shape
  * Left half from face1, right half from face2
+ * Zooms in to show only the face (top ~40% of image)
  */
 function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height) {
   const radiusX = width / 2;
   const radiusY = height / 2;
 
-  // Calculate scale to fit faces nicely in the oval
-  const targetHeight = height * 0.95;
+  // Scale images so that the face (roughly top 35-40% of image) fills the oval
+  // This means we scale based on oval height = 35% of image height
+  const facePortionOfImage = 0.35; // Face is roughly 35% of the full photo height
 
-  const scale1 = targetHeight / faceImg1.height;
-  const scale2 = targetHeight / faceImg2.height;
-  const scale = Math.min(scale1, scale2); // Use smaller scale for consistency
+  const scale1 = height / (faceImg1.height * facePortionOfImage);
+  const scale2 = height / (faceImg2.height * facePortionOfImage);
+  const scale = Math.min(scale1, scale2);
 
   const scaledWidth1 = faceImg1.width * scale;
   const scaledHeight1 = faceImg1.height * scale;
   const scaledWidth2 = faceImg2.width * scale;
   const scaledHeight2 = faceImg2.height * scale;
+
+  // Position image so that the face (top portion) is centered in the oval
+  // Shift the image up so the face area is in the center
+  const faceOffsetY = scaledHeight1 * 0.18; // Shift up to center face
 
   // Face 1 - left half of result
   ctx.save();
@@ -183,7 +189,7 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height
   ctx.clip();
 
   const offsetX1 = centerX - scaledWidth1 / 2;
-  const offsetY1 = centerY - scaledHeight1 / 2;
+  const offsetY1 = centerY - scaledHeight1 / 2 - faceOffsetY;
   ctx.drawImage(faceImg1, offsetX1, offsetY1, scaledWidth1, scaledHeight1);
   ctx.restore();
 
@@ -194,7 +200,7 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height
   ctx.clip();
 
   const offsetX2 = centerX - scaledWidth2 / 2;
-  const offsetY2 = centerY - scaledHeight2 / 2;
+  const offsetY2 = centerY - scaledHeight2 / 2 - faceOffsetY;
   ctx.drawImage(faceImg2, offsetX2, offsetY2, scaledWidth2, scaledHeight2);
   ctx.restore();
 }
