@@ -7,23 +7,44 @@ import { removeBackground, preload } from '@imgly/background-removal';
 
 let isModelPreloaded = false;
 let preloadPromise = null;
+let preloadProgressCallback = null;
+
+// Use 'small' model for faster download (~44MB vs ~88MB for medium)
+const MODEL_TYPE = 'small';
 
 /**
  * Preload the background removal model
  * Call this early (e.g., on welcome screen) to download the model in advance
+ * @param {Function} onProgress - Progress callback (0-100)
  */
-export async function preloadModel() {
-  if (isModelPreloaded || preloadPromise) {
+export async function preloadModel(onProgress = () => {}) {
+  if (isModelPreloaded) {
+    onProgress(100);
+    return Promise.resolve();
+  }
+
+  if (preloadPromise) {
+    preloadProgressCallback = onProgress;
     return preloadPromise;
   }
 
+  preloadProgressCallback = onProgress;
   console.log('Preloading background removal model...');
 
   preloadPromise = preload({
-    model: 'medium'
+    model: MODEL_TYPE,
+    progress: (key, current, total) => {
+      if (preloadProgressCallback && total > 0) {
+        const progress = Math.round((current / total) * 100);
+        preloadProgressCallback(progress);
+      }
+    }
   }).then(() => {
     isModelPreloaded = true;
     console.log('Background removal model preloaded!');
+    if (preloadProgressCallback) {
+      preloadProgressCallback(100);
+    }
   }).catch(err => {
     console.warn('Model preload failed:', err);
   });
@@ -47,7 +68,7 @@ export function isModelReady() {
 export async function removeImageBackground(imageBlob, onProgress = () => {}) {
   try {
     const config = {
-      model: 'medium',
+      model: MODEL_TYPE,
       output: {
         format: 'image/png',
         quality: 0.9
