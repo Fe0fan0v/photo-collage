@@ -10,13 +10,21 @@
 
 import { loadImage, blobToBase64 } from '../utils/helpers.js';
 
-// Import assets
+// Import assets as URLs
 import plate1Url from '../assets/plate-1.jpg';
 import plate2Url from '../assets/plate-2.jpg';
 import plate3Url from '../assets/plate-3.jpg';
-import backgroundPatternUrl from '../assets/background-pattern.svg?url';
 
-const PLATES = [plate1Url, plate2Url, plate3Url];
+const PLATE_URLS = [plate1Url, plate2Url, plate3Url];
+
+/**
+ * Fetch image as data URL to avoid CORS/security issues
+ */
+async function fetchImageAsDataUrl(url) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return blobToBase64(blob);
+}
 
 // Output dimensions (square for the plate)
 const OUTPUT_SIZE = 1000;
@@ -47,17 +55,21 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(20);
 
-  const [img1, img2, plateImg, bgPattern] = await Promise.all([
+  // Load plate as data URL to avoid canvas security issues
+  const plateDataUrl = await fetchImageAsDataUrl(PLATE_URLS[plateIndex]);
+
+  onProgress(30);
+
+  const [img1, img2, plateImg] = await Promise.all([
     loadImage(img1DataUrl),
     loadImage(img2DataUrl),
-    loadImage(PLATES[plateIndex]),
-    loadBackgroundPattern()
+    loadImage(plateDataUrl)
   ]);
 
   onProgress(40);
 
-  // Step 1: Draw background pattern
-  drawBackgroundPattern(ctx, bgPattern, OUTPUT_SIZE);
+  // Step 1: Draw background pattern (using programmatic pattern to avoid security issues)
+  drawBackgroundPattern(ctx, null, OUTPUT_SIZE);
   onProgress(50);
 
   // Step 2: Combine and draw faces in circular mask
@@ -86,17 +98,6 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   return canvas.toDataURL('image/jpeg', 0.92);
 }
 
-/**
- * Load and prepare background pattern
- */
-async function loadBackgroundPattern() {
-  try {
-    return await loadImage(backgroundPatternUrl);
-  } catch (e) {
-    console.warn('Could not load background pattern, using fallback');
-    return null;
-  }
-}
 
 /**
  * Draw zigzag background pattern
