@@ -1,6 +1,6 @@
 /**
  * Processing Screen
- * Shows progress while creating collage
+ * Shows progress while removing backgrounds and creating collage
  */
 
 import { createElement } from '../utils/helpers.js';
@@ -27,7 +27,7 @@ export class ProcessingScreen {
     container.appendChild(title);
 
     // Status text
-    this.statusText = createElement('p', {}, 'Подготовка изображений...');
+    this.statusText = createElement('p', {}, 'Подготовка...');
     container.appendChild(this.statusText);
 
     // Progress bar
@@ -39,6 +39,12 @@ export class ProcessingScreen {
     progressBar.appendChild(this.progressFill);
     container.appendChild(progressBar);
 
+    // Note about processing time
+    const note = createElement('p', {
+      style: { fontSize: '0.8rem', marginTop: '20px', opacity: '0.7' }
+    }, 'Удаление фона может занять 10-30 секунд');
+    container.appendChild(note);
+
     screen.appendChild(container);
 
     return screen;
@@ -49,7 +55,7 @@ export class ProcessingScreen {
       await this.processPhotos();
     } catch (error) {
       console.error('Processing error:', error);
-      alert(error.message || 'Произошла ошибка при создании коллажа. Попробуйте еще раз.');
+      alert(error.message || 'Произошла ошибка при обработке. Попробуйте ещё раз.');
       this.app.reset();
       this.app.navigateTo('camera');
     }
@@ -67,18 +73,23 @@ export class ProcessingScreen {
       throw new Error('Тарелка не выбрана');
     }
 
-    this.updateStatus('Создаём коллаж...');
-
     const collageDataUrl = await createCollage(
       photos[0],
       photos[1],
       plateIndex,
       (progress) => {
         this.updateProgress(progress);
-        if (progress < 50) {
-          this.updateStatus('Загружаем изображения...');
-        } else if (progress < 80) {
-          this.updateStatus('Объединяем фотографии...');
+
+        if (progress < 5) {
+          this.updateStatus('Подготовка...');
+        } else if (progress < 30) {
+          this.updateStatus('Удаляем фон с фото 1...');
+        } else if (progress < 55) {
+          this.updateStatus('Удаляем фон с фото 2...');
+        } else if (progress < 70) {
+          this.updateStatus('Загружаем тарелку...');
+        } else if (progress < 90) {
+          this.updateStatus('Собираем коллаж...');
         } else {
           this.updateStatus('Финальные штрихи...');
         }
@@ -90,10 +101,8 @@ export class ProcessingScreen {
     this.updateProgress(100);
     this.updateStatus('Готово!');
 
-    // Small delay to show completion
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Navigate to result screen (skip email for now)
     this.app.navigateTo('success');
   }
 

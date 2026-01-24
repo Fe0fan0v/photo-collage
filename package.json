@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.5.1",
     "@emailjs/browser": "^4.3.3"
   },
   "devDependencies": {
