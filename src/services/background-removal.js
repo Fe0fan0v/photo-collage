@@ -3,7 +3,40 @@
  * Uses @imgly/background-removal to remove background from photos
  */
 
-import { removeBackground } from '@imgly/background-removal';
+import { removeBackground, preload } from '@imgly/background-removal';
+
+let isModelPreloaded = false;
+let preloadPromise = null;
+
+/**
+ * Preload the background removal model
+ * Call this early (e.g., on welcome screen) to download the model in advance
+ */
+export async function preloadModel() {
+  if (isModelPreloaded || preloadPromise) {
+    return preloadPromise;
+  }
+
+  console.log('Preloading background removal model...');
+
+  preloadPromise = preload({
+    model: 'medium'
+  }).then(() => {
+    isModelPreloaded = true;
+    console.log('Background removal model preloaded!');
+  }).catch(err => {
+    console.warn('Model preload failed:', err);
+  });
+
+  return preloadPromise;
+}
+
+/**
+ * Check if model is preloaded
+ */
+export function isModelReady() {
+  return isModelPreloaded;
+}
 
 /**
  * Remove background from an image

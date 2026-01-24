@@ -4,6 +4,7 @@
  */
 
 import { createElement } from '../utils/helpers.js';
+import { preloadModel } from '../services/background-removal.js';
 
 export class WelcomeScreen {
   constructor(app) {
@@ -11,6 +12,9 @@ export class WelcomeScreen {
   }
 
   render() {
+    // Start preloading background removal model in the background
+    preloadModel();
+
     const screen = createElement('div', { className: 'screen' });
 
     const content = createElement('div', { className: 'welcome-content' });
