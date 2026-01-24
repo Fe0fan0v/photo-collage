@@ -1,91 +1,69 @@
 /**
  * Background Removal Service
- * Uses @imgly/background-removal to remove background from photos
+ * Uses Python backend with rembg for background removal
  */
 
-import { removeBackground, preload } from '@imgly/background-removal';
+// API endpoint - same host, different port
+const API_URL = `${window.location.protocol}//${window.location.hostname}:3008`;
 
-let isModelPreloaded = false;
-let preloadPromise = null;
-let preloadProgressCallback = null;
-
-// Use 'small' model for faster download (~44MB vs ~88MB for medium)
-const MODEL_TYPE = 'small';
+let isApiReady = false;
 
 /**
- * Preload the background removal model
- * Call this early (e.g., on welcome screen) to download the model in advance
- * @param {Function} onProgress - Progress callback (0-100)
+ * Check if API is available (called on welcome screen)
  */
 export async function preloadModel(onProgress = () => {}) {
-  if (isModelPreloaded) {
+  try {
+    onProgress(50);
+    const response = await fetch(`${API_URL}/health`);
+    if (response.ok) {
+      const data = await response.json();
+      isApiReady = data.model_loaded;
+      onProgress(100);
+    }
+  } catch (err) {
+    console.warn('API health check failed:', err);
     onProgress(100);
-    return Promise.resolve();
   }
-
-  if (preloadPromise) {
-    preloadProgressCallback = onProgress;
-    return preloadPromise;
-  }
-
-  preloadProgressCallback = onProgress;
-  console.log('Preloading background removal model...');
-
-  preloadPromise = preload({
-    model: MODEL_TYPE,
-    progress: (key, current, total) => {
-      if (preloadProgressCallback && total > 0) {
-        const progress = Math.round((current / total) * 100);
-        preloadProgressCallback(progress);
-      }
-    }
-  }).then(() => {
-    isModelPreloaded = true;
-    console.log('Background removal model preloaded!');
-    if (preloadProgressCallback) {
-      preloadProgressCallback(100);
-    }
-  }).catch(err => {
-    console.warn('Model preload failed:', err);
-  });
-
-  return preloadPromise;
 }
 
 /**
- * Check if model is preloaded
+ * Check if API is ready
  */
 export function isModelReady() {
-  return isModelPreloaded;
+  return isApiReady;
 }
 
 /**
- * Remove background from an image
+ * Remove background from an image using backend API
  * @param {Blob} imageBlob - Input image
  * @param {Function} onProgress - Progress callback (0-100)
  * @returns {Promise<Blob>} - Image with transparent background (PNG)
  */
 export async function removeImageBackground(imageBlob, onProgress = () => {}) {
   try {
-    const config = {
-      model: MODEL_TYPE,
-      output: {
-        format: 'image/png',
-        quality: 0.9
-      },
-      progress: (key, current, total) => {
-        let progress = 0;
-        if (key === 'fetch:model') {
-          progress = Math.round((current / total) * 50);
-        } else if (key === 'compute:inference') {
-          progress = 50 + Math.round((current / total) * 50);
-        }
-        onProgress(progress);
-      }
-    };
+    onProgress(10);
 
-    const result = await removeBackground(imageBlob, config);
-    return result;
+    const formData = new FormData();
+    formData.append('file', imageBlob, 'image.jpg');
+
+    onProgress(20);
+
+    const response = await fetch(`${API_URL}/remove-background`, {
+      method: 'POST',
+      body: formData
+    });
+
+    onProgress(80);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'API error');
+    }
+
+    const resultBlob = await response.blob();
+    onProgress(100);
+
+    return resultBlob;
   } catch (error) {
     console.error('Background removal error:', error);
     throw new Error('Не удалось удалить фон. Попробуйте ещё раз.');
