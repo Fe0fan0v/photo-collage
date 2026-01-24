@@ -240,7 +240,10 @@ p {
   background: black;
   border-radius: var(--border-radius);
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  min-height: 200px;
+  max-height: calc(100vh - 250px);
+  max-height: calc(100dvh - 250px);
 }
 
 .camera-video {
@@ -249,6 +252,7 @@ p {
   object-fit: cover;
   transform: scaleX(-1); /* Mirror for selfie */
 }
+
 
 .camera-overlay {
   position: absolute;
@@ -314,6 +318,8 @@ p {
   align-items: center;
   gap: 20px;
   padding: 10px 0;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
 }
 
 .photo-thumbnail {

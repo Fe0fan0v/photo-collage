@@ -50,7 +50,8 @@ export function base64ToBlob(dataUrl) {
 export function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Don't use crossOrigin for data URLs or same-origin
+    // img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
