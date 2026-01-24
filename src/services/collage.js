@@ -28,16 +28,11 @@ async function fetchImageAsDataUrl(url) {
 
 // Output dimensions (square for the plate)
 const OUTPUT_SIZE = 1000;
-const PLATE_SIZE = 800; // Diameter of the plate
-const FACE_SIZE = 700; // Diameter of the face area inside the plate
+const PLATE_SIZE = 900; // Size to draw the plate
+const FACE_SIZE = 580;  // Smaller face area to show more of plate border
 
 /**
  * Create the final collage
- * @param {Blob} photo1 - First photo (left half of face)
- * @param {Blob} photo2 - Second photo (right half of face)
- * @param {number} plateIndex - Selected plate index (0, 1, 2)
- * @param {Function} onProgress - Progress callback
- * @returns {Promise<string>} - Collage as data URL
  */
 export async function createCollage(photo1, photo2, plateIndex, onProgress = () => {}) {
   const canvas = document.createElement('canvas');
@@ -68,29 +63,36 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(40);
 
-  // Step 1: Draw background pattern (using programmatic pattern to avoid security issues)
-  drawBackgroundPattern(ctx, null, OUTPUT_SIZE);
-  onProgress(50);
-
-  // Step 2: Combine and draw faces in circular mask
   const centerX = OUTPUT_SIZE / 2;
   const centerY = OUTPUT_SIZE / 2;
-  const faceRadius = FACE_SIZE / 2;
 
-  // Create circular clipping path for faces
+  // Step 1: Draw background pattern
+  drawBackgroundPattern(ctx, OUTPUT_SIZE);
+  onProgress(50);
+
+  // Step 2: Draw the plate as background (full plate image)
+  drawPlateBackground(ctx, plateImg, centerX, centerY, PLATE_SIZE);
+  onProgress(60);
+
+  // Step 3: Draw combined faces on top, clipped to inner circle
+  const faceRadius = FACE_SIZE / 2;
   ctx.save();
   ctx.beginPath();
   ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
   ctx.clip();
 
-  // Draw combined faces (aligned by height)
   drawCombinedFaces(ctx, img1, img2, centerX, centerY, FACE_SIZE);
   ctx.restore();
 
-  onProgress(70);
+  onProgress(80);
 
-  // Step 3: Draw plate overlay (as circular frame)
-  drawPlateOverlay(ctx, plateImg, centerX, centerY, PLATE_SIZE, FACE_SIZE);
+  // Step 4: Draw dividing line
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - faceRadius);
+  ctx.lineTo(centerX, centerY + faceRadius);
+  ctx.stroke();
 
   onProgress(100);
 
@@ -98,81 +100,86 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   return canvas.toDataURL('image/jpeg', 0.92);
 }
 
-
 /**
  * Draw zigzag background pattern
  */
-function drawBackgroundPattern(ctx, patternImg, size) {
-  if (patternImg) {
-    // Create repeating pattern
-    const pattern = ctx.createPattern(patternImg, 'repeat');
-    ctx.fillStyle = pattern;
-    ctx.fillRect(0, 0, size, size);
-  } else {
-    // Fallback: draw simple zigzag pattern
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
+function drawBackgroundPattern(ctx, size) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
 
-    ctx.fillStyle = '#000000';
-    const step = 20;
-    for (let y = 0; y < size; y += step) {
-      for (let x = 0; x < size; x += step) {
-        const offset = (Math.floor(y / step) % 2) * (step / 2);
-        ctx.beginPath();
-        ctx.moveTo(x + offset, y);
-        ctx.lineTo(x + offset + step / 2, y + step / 2);
-        ctx.lineTo(x + offset, y + step);
-        ctx.lineTo(x + offset - step / 2, y + step / 2);
-        ctx.closePath();
-        ctx.fill();
-      }
+  ctx.fillStyle = '#000000';
+  const step = 20;
+  for (let y = 0; y < size; y += step) {
+    for (let x = 0; x < size; x += step) {
+      const offset = (Math.floor(y / step) % 2) * (step / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + offset, y);
+      ctx.lineTo(x + offset + step / 2, y + step / 2);
+      ctx.lineTo(x + offset, y + step);
+      ctx.lineTo(x + offset - step / 2, y + step / 2);
+      ctx.closePath();
+      ctx.fill();
     }
   }
 }
 
 /**
+ * Draw plate image as circular background
+ */
+function drawPlateBackground(ctx, plateImg, centerX, centerY, size) {
+  const radius = size / 2;
+
+  // Clip to circle
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Draw plate scaled to fill the circle
+  const scale = Math.max(size / plateImg.width, size / plateImg.height);
+  const scaledWidth = plateImg.width * scale;
+  const scaledHeight = plateImg.height * scale;
+  const offsetX = centerX - scaledWidth / 2;
+  const offsetY = centerY - scaledHeight / 2;
+
+  ctx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
+  ctx.restore();
+}
+
+/**
  * Draw combined faces from two photos
- * Left half of photo1 + Right half of photo2
- * Aligned by center (assumes faces are roughly same size)
+ * Both photos are centered and scaled the same way
  */
 function drawCombinedFaces(ctx, img1, img2, centerX, centerY, diameter) {
   const radius = diameter / 2;
 
-  // Calculate how to fit faces - we want to show the face area
-  // Assuming photos are portrait-oriented with face in center
+  // Use the same scale for both images based on the larger dimension
+  // This ensures both faces are at similar scale
+  const scale1 = diameter / Math.min(img1.width, img1.height);
+  const scale2 = diameter / Math.min(img2.width, img2.height);
 
-  // For photo 1: draw the right half of the image (which appears on the left due to mirror)
-  // For photo 2: draw the left half of the image (which appears on the right due to mirror)
+  // Use average scale for consistency
+  const scale = (scale1 + scale2) / 2;
 
-  // Calculate source and destination rectangles
-  // We'll scale the photos to fit the face area by height
+  // Photo 1 - LEFT side of result (shows RIGHT half of mirrored photo)
+  const scaledWidth1 = img1.width * scale;
+  const scaledHeight1 = img1.height * scale;
 
-  const targetHeight = diameter;
-  const targetWidth = diameter;
-
-  // Photo 1 - left side of result
-  const scale1 = Math.max(targetHeight / img1.height, (targetWidth / 2) / (img1.width / 2));
-  const scaledWidth1 = img1.width * scale1;
-  const scaledHeight1 = img1.height * scale1;
-
-  // Draw right half of photo1 on the left side of canvas
   ctx.save();
   ctx.beginPath();
   ctx.rect(centerX - radius, centerY - radius, radius, diameter);
   ctx.clip();
 
-  // Position: center the scaled image, but offset to show the right half
+  // Center the image
   const offsetX1 = centerX - scaledWidth1 / 2;
   const offsetY1 = centerY - scaledHeight1 / 2;
   ctx.drawImage(img1, offsetX1, offsetY1, scaledWidth1, scaledHeight1);
   ctx.restore();
 
-  // Photo 2 - right side of result
-  const scale2 = Math.max(targetHeight / img2.height, (targetWidth / 2) / (img2.width / 2));
-  const scaledWidth2 = img2.width * scale2;
-  const scaledHeight2 = img2.height * scale2;
+  // Photo 2 - RIGHT side of result (shows LEFT half of mirrored photo)
+  const scaledWidth2 = img2.width * scale;
+  const scaledHeight2 = img2.height * scale;
 
-  // Draw left half of photo2 on the right side of canvas
   ctx.save();
   ctx.beginPath();
   ctx.rect(centerX, centerY - radius, radius, diameter);
@@ -182,64 +189,10 @@ function drawCombinedFaces(ctx, img1, img2, centerX, centerY, diameter) {
   const offsetY2 = centerY - scaledHeight2 / 2;
   ctx.drawImage(img2, offsetX2, offsetY2, scaledWidth2, scaledHeight2);
   ctx.restore();
-
-  // Draw vertical dividing line
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY - radius);
-  ctx.lineTo(centerX, centerY + radius);
-  ctx.stroke();
-}
-
-/**
- * Draw plate overlay as a circular frame
- * The plate image is drawn as a ring around the face area
- */
-function drawPlateOverlay(ctx, plateImg, centerX, centerY, plateSize, holeSize) {
-  const plateRadius = plateSize / 2;
-  const holeRadius = holeSize / 2;
-
-  // Create a temporary canvas for the plate with transparent center
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = plateSize;
-  tempCanvas.height = plateSize;
-  const tempCtx = tempCanvas.getContext('2d');
-
-  // Draw the plate image
-  const scale = Math.max(plateSize / plateImg.width, plateSize / plateImg.height);
-  const scaledWidth = plateImg.width * scale;
-  const scaledHeight = plateImg.height * scale;
-  const offsetX = (plateSize - scaledWidth) / 2;
-  const offsetY = (plateSize - scaledHeight) / 2;
-
-  tempCtx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
-
-  // Cut out the center circle
-  tempCtx.globalCompositeOperation = 'destination-out';
-  tempCtx.beginPath();
-  tempCtx.arc(plateSize / 2, plateSize / 2, holeRadius, 0, Math.PI * 2);
-  tempCtx.fill();
-
-  // Draw the plate frame onto the main canvas
-  const destX = centerX - plateRadius;
-  const destY = centerY - plateRadius;
-  ctx.drawImage(tempCanvas, destX, destY);
-
-  // Add subtle shadow around the inner edge
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, holeRadius, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  ctx.restore();
 }
 
 /**
  * Export collage as Blob
- * @param {string} dataUrl
- * @returns {Blob}
  */
 export function collageToBlob(dataUrl) {
   const [header, base64] = dataUrl.split(',');
