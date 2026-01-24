@@ -1,6 +1,7 @@
 /**
  * Background Removal Service
  * Uses Python backend with rembg for background removal
+ * Now includes face detection for accurate positioning
  */
 
 // API endpoint - same host, different port
@@ -34,12 +35,12 @@ export function isModelReady() {
 }
 
 /**
- * Remove background from an image using backend API
+ * Process face: remove background and detect face position
  * @param {Blob} imageBlob - Input image
  * @param {Function} onProgress - Progress callback (0-100)
- * @returns {Promise<Blob>} - Image with transparent background (PNG)
+ * @returns {Promise<{image: string, face: Object, width: number, height: number}>}
  */
-export async function removeImageBackground(imageBlob, onProgress = () => {}) {
+export async function processFace(imageBlob, onProgress = () => {}) {
   try {
     onProgress(10);
 
@@ -48,7 +49,7 @@ export async function removeImageBackground(imageBlob, onProgress = () => {}) {
 
     onProgress(20);
 
-    const response = await fetch(`${API_URL}/remove-background`, {
+    const response = await fetch(`${API_URL}/process-face`, {
       method: 'POST',
       body: formData
     });
@@ -60,23 +61,23 @@ export async function removeImageBackground(imageBlob, onProgress = () => {}) {
       throw new Error(error.detail || 'API error');
     }
 
-    const resultBlob = await response.blob();
+    const result = await response.json();
     onProgress(100);
 
-    return resultBlob;
+    return result;
   } catch (error) {
-    console.error('Background removal error:', error);
-    throw new Error('Не удалось удалить фон. Попробуйте ещё раз.');
+    console.error('Face processing error:', error);
+    throw new Error('Не удалось обработать фото. Попробуйте ещё раз.');
   }
 }
 
 /**
- * Process multiple images
+ * Process multiple faces
  * @param {Blob[]} images
  * @param {Function} onProgress - Progress callback (0-100, imageIndex)
- * @returns {Promise<Blob[]>}
+ * @returns {Promise<Array<{image: string, face: Object, width: number, height: number}>>}
  */
-export async function processMultipleImages(images, onProgress = () => {}) {
+export async function processMultipleFaces(images, onProgress = () => {}) {
   const results = [];
   const total = images.length;
 
@@ -87,7 +88,7 @@ export async function processMultipleImages(images, onProgress = () => {}) {
       onProgress(Math.round(baseProgress + contribution), i);
     };
 
-    const processed = await removeImageBackground(images[i], imageProgress);
+    const processed = await processFace(images[i], imageProgress);
     results.push(processed);
   }
 

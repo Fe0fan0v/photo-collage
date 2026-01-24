@@ -3,14 +3,14 @@
  * Creates a plate-framed face mashup from two photos
  *
  * Process:
- * 1. Remove background from both photos
+ * 1. Remove background from both photos + detect face position
  * 2. Draw background pattern
  * 3. Draw plate
  * 4. Overlay faces (left half of person1, right half of person2)
  */
 
 import { loadImage, blobToBase64 } from '../utils/helpers.js';
-import { processMultipleImages } from './background-removal.js';
+import { processMultipleFaces } from './background-removal.js';
 
 // Import plate images
 import plate1Url from '../assets/plate-1.jpg';
@@ -46,11 +46,10 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const centerX = OUTPUT_SIZE / 2;
   const centerY = OUTPUT_SIZE / 2;
 
-  // Step 1: Remove backgrounds (0-60%)
+  // Step 1: Process faces - remove backgrounds and detect face positions (0-60%)
   onProgress(5);
 
-  const processedPhotos = await processMultipleImages([photo1, photo2], (progress, idx) => {
-    // Map 0-100 to 5-60%
+  const processedFaces = await processMultipleFaces([photo1, photo2], (progress, idx) => {
     const mappedProgress = 5 + Math.round(progress * 0.55);
     onProgress(mappedProgress);
   });
@@ -62,14 +61,9 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const plateImg = await loadImage(plateDataUrl);
 
   // Step 3: Load processed face images
-  const [face1DataUrl, face2DataUrl] = await Promise.all([
-    blobToBase64(processedPhotos[0]),
-    blobToBase64(processedPhotos[1])
-  ]);
-
   const [faceImg1, faceImg2] = await Promise.all([
-    loadImage(face1DataUrl),
-    loadImage(face2DataUrl)
+    loadImage(processedFaces[0].image),
+    loadImage(processedFaces[1].image)
   ]);
 
   onProgress(70);
@@ -92,8 +86,13 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
   ctx.clip();
 
-  // Draw both face halves
-  drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, FACE_WIDTH, FACE_HEIGHT);
+  // Draw both face halves using detected face positions
+  drawFaceHalves(
+    ctx,
+    faceImg1, processedFaces[0].face,
+    faceImg2, processedFaces[1].face,
+    centerX, centerY, FACE_WIDTH, FACE_HEIGHT
+  );
 
   ctx.restore();
 
@@ -158,50 +157,81 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
 
 /**
  * Draw two face halves side by side in oval shape
- * Left half from face1, right half from face2
- * Zooms in to show only the face (top ~40% of image)
+ * Uses detected face positions for accurate placement
  */
-function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height) {
+function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY, width, height) {
   const radiusX = width / 2;
   const radiusY = height / 2;
 
-  // Scale images so that the face (roughly top 35-40% of image) fills the oval
-  // This means we scale based on oval height = 35% of image height
-  const facePortionOfImage = 0.35; // Face is roughly 35% of the full photo height
+  // Draw face 1 (left half)
+  drawSingleFace(ctx, faceImg1, face1, centerX, centerY, radiusX, radiusY, 'left');
 
-  const scale1 = height / (faceImg1.height * facePortionOfImage);
-  const scale2 = height / (faceImg2.height * facePortionOfImage);
-  const scale = Math.min(scale1, scale2);
+  // Draw face 2 (right half)
+  drawSingleFace(ctx, faceImg2, face2, centerX, centerY, radiusX, radiusY, 'right');
+}
 
-  const scaledWidth1 = faceImg1.width * scale;
-  const scaledHeight1 = faceImg1.height * scale;
-  const scaledWidth2 = faceImg2.width * scale;
-  const scaledHeight2 = faceImg2.height * scale;
-
-  // Position image so that the face (top portion) is centered in the oval
-  // Shift the image DOWN so the face area (top of image) appears in the oval
-  const faceOffsetY = scaledHeight1 * 0.25; // Shift down to show face
-
-  // Face 1 - left half of result
+/**
+ * Draw a single face, scaled and positioned based on detected face coordinates
+ */
+function drawSingleFace(ctx, faceImg, faceInfo, centerX, centerY, radiusX, radiusY, side) {
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(centerX - radiusX, centerY - radiusY, radiusX, height);
-  ctx.clip();
 
-  const offsetX1 = centerX - scaledWidth1 / 2;
-  const offsetY1 = centerY - scaledHeight1 / 2 + faceOffsetY;
-  ctx.drawImage(faceImg1, offsetX1, offsetY1, scaledWidth1, scaledHeight1);
-  ctx.restore();
+  // Clip to left or right half
+  if (side === 'left') {
+    ctx.beginPath();
+    ctx.rect(centerX - radiusX, centerY - radiusY, radiusX, radiusY * 2);
+    ctx.clip();
+  } else {
+    ctx.beginPath();
+    ctx.rect(centerX, centerY - radiusY, radiusX, radiusY * 2);
+    ctx.clip();
+  }
 
-  // Face 2 - right half of result
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(centerX, centerY - radiusY, radiusX, height);
-  ctx.clip();
+  const imgWidth = faceImg.width;
+  const imgHeight = faceImg.height;
 
-  const offsetX2 = centerX - scaledWidth2 / 2;
-  const offsetY2 = centerY - scaledHeight2 / 2 + faceOffsetY;
-  ctx.drawImage(faceImg2, offsetX2, offsetY2, scaledWidth2, scaledHeight2);
+  let scale, offsetX, offsetY;
+
+  if (faceInfo && faceInfo.found) {
+    // Use detected face coordinates
+    // Face info contains percentages: x, y, width, height
+    const faceX = faceInfo.x * imgWidth;
+    const faceY = faceInfo.y * imgHeight;
+    const faceW = faceInfo.width * imgWidth;
+    const faceH = faceInfo.height * imgHeight;
+
+    // Center of detected face
+    const faceCenterX = faceX + faceW / 2;
+    const faceCenterY = faceY + faceH / 2;
+
+    // Scale so the detected face height fits nicely in the oval
+    // Add some padding around the face (face should be ~70% of oval height)
+    scale = (radiusY * 2 * 0.7) / faceH;
+
+    // Position so face center aligns with oval center
+    const scaledFaceCenterX = faceCenterX * scale;
+    const scaledFaceCenterY = faceCenterY * scale;
+
+    offsetX = centerX - scaledFaceCenterX;
+    offsetY = centerY - scaledFaceCenterY;
+  } else {
+    // Fallback: assume face is in top 40% of image, centered horizontally
+    const assumedFaceY = imgHeight * 0.2;
+    const assumedFaceH = imgHeight * 0.35;
+
+    scale = (radiusY * 2 * 0.8) / assumedFaceH;
+
+    const scaledImgWidth = imgWidth * scale;
+    const scaledAssumedFaceCenter = assumedFaceY * scale + (assumedFaceH * scale) / 2;
+
+    offsetX = centerX - scaledImgWidth / 2;
+    offsetY = centerY - scaledAssumedFaceCenter;
+  }
+
+  const scaledWidth = imgWidth * scale;
+  const scaledHeight = imgHeight * scale;
+
+  ctx.drawImage(faceImg, offsetX, offsetY, scaledWidth, scaledHeight);
   ctx.restore();
 }
 
