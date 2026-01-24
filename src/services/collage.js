@@ -179,8 +179,8 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height
   const scaledHeight2 = faceImg2.height * scale;
 
   // Position image so that the face (top portion) is centered in the oval
-  // Shift the image up so the face area is in the center
-  const faceOffsetY = scaledHeight1 * 0.18; // Shift up to center face
+  // Shift the image DOWN so the face area (top of image) appears in the oval
+  const faceOffsetY = scaledHeight1 * 0.25; // Shift down to show face
 
   // Face 1 - left half of result
   ctx.save();
@@ -189,7 +189,7 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height
   ctx.clip();
 
   const offsetX1 = centerX - scaledWidth1 / 2;
-  const offsetY1 = centerY - scaledHeight1 / 2 - faceOffsetY;
+  const offsetY1 = centerY - scaledHeight1 / 2 + faceOffsetY;
   ctx.drawImage(faceImg1, offsetX1, offsetY1, scaledWidth1, scaledHeight1);
   ctx.restore();
 
@@ -200,7 +200,7 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height
   ctx.clip();
 
   const offsetX2 = centerX - scaledWidth2 / 2;
-  const offsetY2 = centerY - scaledHeight2 / 2 - faceOffsetY;
+  const offsetY2 = centerY - scaledHeight2 / 2 + faceOffsetY;
   ctx.drawImage(faceImg2, offsetX2, offsetY2, scaledWidth2, scaledHeight2);
   ctx.restore();
 }
