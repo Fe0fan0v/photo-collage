@@ -157,23 +157,67 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
 
 /**
  * Draw two face halves side by side in oval shape
- * Uses detected face positions for accurate placement
+ * Aligns faces by top and bottom edges (forehead and chin line up)
  */
 function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY, width, height) {
   const radiusX = width / 2;
   const radiusY = height / 2;
 
+  // Target face height in the final image (70% of oval height)
+  const targetFaceHeight = radiusY * 2 * 0.75;
+
+  // Get face info for both images
+  const face1Info = getFacePixelCoords(faceImg1, face1);
+  const face2Info = getFacePixelCoords(faceImg2, face2);
+
+  // Calculate scale for each face so their face heights match the target
+  const scale1 = targetFaceHeight / face1Info.faceH;
+  const scale2 = targetFaceHeight / face2Info.faceH;
+
+  // Calculate where the top of the face should be in the oval
+  // Center the face vertically with some padding at top for hair
+  const faceTopY = centerY - radiusY + (radiusY * 2 - targetFaceHeight) / 2;
+
   // Draw face 1 (left half)
-  drawSingleFace(ctx, faceImg1, face1, centerX, centerY, radiusX, radiusY, 'left');
+  drawAlignedFace(ctx, faceImg1, face1Info, scale1, faceTopY, centerX, centerY, radiusX, radiusY, 'left');
 
   // Draw face 2 (right half)
-  drawSingleFace(ctx, faceImg2, face2, centerX, centerY, radiusX, radiusY, 'right');
+  drawAlignedFace(ctx, faceImg2, face2Info, scale2, faceTopY, centerX, centerY, radiusX, radiusY, 'right');
 }
 
 /**
- * Draw a single face, scaled and positioned based on detected face coordinates
+ * Get face coordinates in pixels (with fallback for undetected faces)
  */
-function drawSingleFace(ctx, faceImg, faceInfo, centerX, centerY, radiusX, radiusY, side) {
+function getFacePixelCoords(faceImg, faceInfo) {
+  const imgWidth = faceImg.width;
+  const imgHeight = faceImg.height;
+
+  if (faceInfo && faceInfo.found) {
+    return {
+      faceX: faceInfo.x * imgWidth,
+      faceY: faceInfo.y * imgHeight,
+      faceW: faceInfo.width * imgWidth,
+      faceH: faceInfo.height * imgHeight,
+      imgWidth,
+      imgHeight
+    };
+  }
+
+  // Fallback: assume face is roughly in the upper-middle portion
+  return {
+    faceX: imgWidth * 0.25,
+    faceY: imgHeight * 0.15,
+    faceW: imgWidth * 0.5,
+    faceH: imgHeight * 0.4,
+    imgWidth,
+    imgHeight
+  };
+}
+
+/**
+ * Draw a single face aligned by the top edge of the detected face
+ */
+function drawAlignedFace(ctx, faceImg, faceInfo, scale, faceTopY, centerX, centerY, radiusX, radiusY, side) {
   ctx.save();
 
   // Clip to left or right half
@@ -187,49 +231,19 @@ function drawSingleFace(ctx, faceImg, faceInfo, centerX, centerY, radiusX, radiu
     ctx.clip();
   }
 
-  const imgWidth = faceImg.width;
-  const imgHeight = faceImg.height;
+  const scaledWidth = faceInfo.imgWidth * scale;
+  const scaledHeight = faceInfo.imgHeight * scale;
 
-  let scale, offsetX, offsetY;
+  // Position so that:
+  // 1. Top of detected face aligns with faceTopY
+  // 2. Center of face horizontally aligns with centerX
+  const scaledFaceX = faceInfo.faceX * scale;
+  const scaledFaceY = faceInfo.faceY * scale;
+  const scaledFaceW = faceInfo.faceW * scale;
+  const scaledFaceCenterX = scaledFaceX + scaledFaceW / 2;
 
-  if (faceInfo && faceInfo.found) {
-    // Use detected face coordinates
-    // Face info contains percentages: x, y, width, height
-    const faceX = faceInfo.x * imgWidth;
-    const faceY = faceInfo.y * imgHeight;
-    const faceW = faceInfo.width * imgWidth;
-    const faceH = faceInfo.height * imgHeight;
-
-    // Center of detected face
-    const faceCenterX = faceX + faceW / 2;
-    const faceCenterY = faceY + faceH / 2;
-
-    // Scale so the detected face height fits nicely in the oval
-    // Add some padding around the face (face should be ~70% of oval height)
-    scale = (radiusY * 2 * 0.7) / faceH;
-
-    // Position so face center aligns with oval center
-    const scaledFaceCenterX = faceCenterX * scale;
-    const scaledFaceCenterY = faceCenterY * scale;
-
-    offsetX = centerX - scaledFaceCenterX;
-    offsetY = centerY - scaledFaceCenterY;
-  } else {
-    // Fallback: assume face is in top 40% of image, centered horizontally
-    const assumedFaceY = imgHeight * 0.2;
-    const assumedFaceH = imgHeight * 0.35;
-
-    scale = (radiusY * 2 * 0.8) / assumedFaceH;
-
-    const scaledImgWidth = imgWidth * scale;
-    const scaledAssumedFaceCenter = assumedFaceY * scale + (assumedFaceH * scale) / 2;
-
-    offsetX = centerX - scaledImgWidth / 2;
-    offsetY = centerY - scaledAssumedFaceCenter;
-  }
-
-  const scaledWidth = imgWidth * scale;
-  const scaledHeight = imgHeight * scale;
+  const offsetX = centerX - scaledFaceCenterX;
+  const offsetY = faceTopY - scaledFaceY;
 
   ctx.drawImage(faceImg, offsetX, offsetY, scaledWidth, scaledHeight);
   ctx.restore();
