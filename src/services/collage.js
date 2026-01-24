@@ -31,7 +31,8 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions
 const OUTPUT_SIZE = 1000;
 const PLATE_SIZE = 900;
-const FACE_SIZE = 620; // Face area inside plate
+const FACE_WIDTH = 500;  // Oval width for face
+const FACE_HEIGHT = 620; // Oval height for face (taller than wide)
 
 /**
  * Create the final collage
@@ -81,17 +82,18 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(80);
 
-  // Step 6: Draw faces on top of plate
-  const faceRadius = FACE_SIZE / 2;
+  // Step 6: Draw faces on top of plate in oval shape
+  const radiusX = FACE_WIDTH / 2;
+  const radiusY = FACE_HEIGHT / 2;
 
-  // Clip to inner circle for faces
+  // Clip to oval for faces
   ctx.save();
   ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
+  ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
   ctx.clip();
 
   // Draw both face halves
-  drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, FACE_SIZE);
+  drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, FACE_WIDTH, FACE_HEIGHT);
 
   ctx.restore();
 
@@ -101,8 +103,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(centerX, centerY - faceRadius);
-  ctx.lineTo(centerX, centerY + faceRadius);
+  ctx.moveTo(centerX, centerY - radiusY);
+  ctx.lineTo(centerX, centerY + radiusY);
   ctx.stroke();
 
   onProgress(100);
@@ -155,15 +157,15 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
 }
 
 /**
- * Draw two face halves side by side
+ * Draw two face halves side by side in oval shape
  * Left half from face1, right half from face2
  */
-function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, diameter) {
-  const radius = diameter / 2;
+function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, width, height) {
+  const radiusX = width / 2;
+  const radiusY = height / 2;
 
-  // Calculate scale to fit faces nicely
-  // We want the face to fill most of the circle vertically
-  const targetHeight = diameter * 0.9;
+  // Calculate scale to fit faces nicely in the oval
+  const targetHeight = height * 0.95;
 
   const scale1 = targetHeight / faceImg1.height;
   const scale2 = targetHeight / faceImg2.height;
@@ -175,10 +177,9 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, diameter) {
   const scaledHeight2 = faceImg2.height * scale;
 
   // Face 1 - left half of result
-  // Draw the image centered, but only show the right half (which is left half of mirrored selfie)
   ctx.save();
   ctx.beginPath();
-  ctx.rect(centerX - radius, centerY - radius, radius, diameter);
+  ctx.rect(centerX - radiusX, centerY - radiusY, radiusX, height);
   ctx.clip();
 
   const offsetX1 = centerX - scaledWidth1 / 2;
@@ -189,7 +190,7 @@ function drawFaceHalves(ctx, faceImg1, faceImg2, centerX, centerY, diameter) {
   // Face 2 - right half of result
   ctx.save();
   ctx.beginPath();
-  ctx.rect(centerX, centerY - radius, radius, diameter);
+  ctx.rect(centerX, centerY - radiusY, radiusX, height);
   ctx.clip();
 
   const offsetX2 = centerX - scaledWidth2 / 2;
