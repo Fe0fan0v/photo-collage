@@ -66,4 +66,16 @@ async def remove_background(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3008)
+    import os
+
+    cert_file = "../certs/cert.pem"
+    key_file = "../certs/key.pem"
+
+    ssl_config = {}
+    if os.path.exists(cert_file) and os.path.exists(key_file):
+        ssl_config = {
+            "ssl_certfile": cert_file,
+            "ssl_keyfile": key_file
+        }
+
+    uvicorn.run(app, host="0.0.0.0", port=3008, **ssl_config)
