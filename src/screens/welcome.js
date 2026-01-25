@@ -9,10 +9,18 @@ import { preloadModel } from '../services/background-removal.js';
 export class WelcomeScreen {
   constructor(app) {
     this.app = app;
+    this.warningElement = null;
   }
 
   render() {
     const screen = createElement('div', { className: 'screen' });
+
+    // Backend warning (hidden by default)
+    this.warningElement = createElement('div', {
+      className: 'error-message hidden',
+      style: { marginBottom: '16px' }
+    });
+    screen.appendChild(this.warningElement);
 
     const content = createElement('div', { className: 'welcome-content' });
 
@@ -72,9 +80,19 @@ export class WelcomeScreen {
     return screen;
   }
 
-  mount() {
-    // Check API health in background
-    preloadModel();
+  async mount() {
+    // Check API health and show warning if not available
+    const apiAvailable = await preloadModel();
+    if (!apiAvailable) {
+      this.showWarning('⚠️ Backend сервер не отвечает. Убедитесь, что Python backend запущен на порту 3008.');
+    }
+  }
+
+  showWarning(message) {
+    if (this.warningElement) {
+      this.warningElement.textContent = message;
+      this.warningElement.classList.remove('hidden');
+    }
   }
 
   handleStart() {

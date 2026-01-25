@@ -15,15 +15,28 @@ let isApiReady = false;
 export async function preloadModel(onProgress = () => {}) {
   try {
     onProgress(50);
-    const response = await fetch(`${API_URL}/health`);
+    const response = await fetch(`${API_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000) // 5 second timeout
+    });
     if (response.ok) {
       const data = await response.json();
       isApiReady = data.model_loaded;
+      console.log('Backend API ready:', data);
       onProgress(100);
+      return true;
+    } else {
+      console.warn('Backend API returned error:', response.status);
+      isApiReady = false;
+      onProgress(100);
+      return false;
     }
   } catch (err) {
-    console.warn('API health check failed:', err);
+    console.error('Backend API health check failed:', err);
+    console.error('Expected backend URL:', API_URL);
+    isApiReady = false;
     onProgress(100);
+    return false;
   }
 }
 
@@ -57,8 +70,15 @@ export async function processFace(imageBlob, onProgress = () => {}) {
     onProgress(80);
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'API error');
+      let errorMessage = 'Ошибка обработки фото';
+      try {
+        const error = await response.json();
+        errorMessage = error.detail || errorMessage;
+      } catch (e) {
+        // Failed to parse JSON error
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
 
     const result = await response.json();
@@ -67,7 +87,13 @@ export async function processFace(imageBlob, onProgress = () => {}) {
     return result;
   } catch (error) {
     console.error('Face processing error:', error);
-    throw new Error('Не удалось обработать фото. Попробуйте ещё раз.');
+
+    // Provide more specific error messages
+    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+      throw new Error(`Сервер обработки не доступен. Проверьте, что backend запущен на ${API_URL}`);
+    }
+
+    throw new Error(error.message || 'Не удалось обработать фото. Попробуйте ещё раз.');
   }
 }
 

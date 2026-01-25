@@ -15,6 +15,8 @@ export class CameraScreen {
     this.photo1Thumbnail = null;
     this.photo2Thumbnail = null;
     this.instructionText = null;
+    this.photo1Preview = null; // Full preview of photo 1 when taking photo 2
+    this.photo1DataUrl = null; // Store photo 1 data URL
   }
 
   async render() {
@@ -41,6 +43,10 @@ export class CameraScreen {
 
     // Face guide overlay
     const overlay = createElement('div', { className: 'camera-overlay' });
+
+    // Photo 1 preview (shown only when taking photo 2)
+    this.photo1Preview = createElement('div', { className: 'camera-photo1-preview hidden' });
+    overlay.appendChild(this.photo1Preview);
 
     // Vertical center line
     const centerLine = createElement('div', { className: 'camera-center-line' });
@@ -134,10 +140,12 @@ export class CameraScreen {
 
       if (this.currentPhotoIndex === 0) {
         // First photo captured
+        this.photo1DataUrl = photoDataUrl;
         this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
         this.currentPhotoIndex = 1;
         this.updateInstructionText();
         this.updateSideIndicator();
+        this.showPhoto1Preview();
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
@@ -184,6 +192,13 @@ export class CameraScreen {
     }
   }
 
+  showPhoto1Preview() {
+    if (this.photo1Preview && this.photo1DataUrl) {
+      this.photo1Preview.style.backgroundImage = `url(${this.photo1DataUrl})`;
+      this.photo1Preview.classList.remove('hidden');
+    }
+  }
+
   showError(message) {
     this.errorContainer.textContent = message;
     this.errorContainer.classList.remove('hidden');
@@ -192,5 +207,6 @@ export class CameraScreen {
   cleanup() {
     this.stopCamera();
     this.currentPhotoIndex = 0;
+    this.photo1DataUrl = null;
   }
 }
