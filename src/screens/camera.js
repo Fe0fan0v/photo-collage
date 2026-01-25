@@ -4,7 +4,8 @@
  * Shows vertical guide line for face alignment
  */
 
-import { createElement, captureVideoFrame, blobToBase64 } from '../utils/helpers.js';
+import { createElement, captureVideoFrame, blobToBase64, loadImage } from '../utils/helpers.js';
+import { processFace } from '../services/background-removal.js';
 
 export class CameraScreen {
   constructor(app) {
@@ -15,8 +16,9 @@ export class CameraScreen {
     this.photo1Thumbnail = null;
     this.photo2Thumbnail = null;
     this.instructionText = null;
-    this.photo1Preview = null; // Full preview of photo 1 when taking photo 2
+    this.photo1Preview = null; // Canvas preview of photo 1 when taking photo 2
     this.photo1DataUrl = null; // Store photo 1 data URL
+    this.photo1FaceData = null; // Store face detection data for photo 1
   }
 
   async render() {
@@ -139,13 +141,25 @@ export class CameraScreen {
       this.app.addPhoto(photoBlob);
 
       if (this.currentPhotoIndex === 0) {
-        // First photo captured
+        // First photo captured - process it to get face detection data
         this.photo1DataUrl = photoDataUrl;
         this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
-        this.currentPhotoIndex = 1;
         this.updateInstructionText();
         this.updateSideIndicator();
-        this.showPhoto1Preview();
+
+        // Process photo 1 to get face data and show preview
+        this.showProcessingIndicator();
+        try {
+          const processed = await processFace(photoBlob);
+          this.photo1FaceData = processed;
+          await this.showPhoto1Preview();
+        } catch (error) {
+          console.error('Failed to process photo 1:', error);
+          // Continue anyway with fallback positioning
+        }
+        this.hideProcessingIndicator();
+
+        this.currentPhotoIndex = 1;
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
@@ -192,11 +206,112 @@ export class CameraScreen {
     }
   }
 
-  showPhoto1Preview() {
-    if (this.photo1Preview && this.photo1DataUrl) {
-      this.photo1Preview.style.backgroundImage = `url(${this.photo1DataUrl})`;
-      this.photo1Preview.classList.remove('hidden');
+  showProcessingIndicator() {
+    if (this.instructionText) {
+      this.instructionText.innerHTML = '<span style="opacity: 0.7">⏳ Обработка...</span>';
     }
+  }
+
+  hideProcessingIndicator() {
+    this.updateInstructionText();
+  }
+
+  async showPhoto1Preview() {
+    if (!this.photo1Preview || !this.photo1FaceData) return;
+
+    try {
+      // Create canvas for preview with correct face positioning
+      const previewCanvas = await this.createFacePreviewCanvas(
+        this.photo1FaceData.image,
+        this.photo1FaceData.face
+      );
+
+      // Convert canvas to data URL and set as background
+      const previewDataUrl = previewCanvas.toDataURL('image/png');
+      this.photo1Preview.style.backgroundImage = `url(${previewDataUrl})`;
+      this.photo1Preview.classList.remove('hidden');
+    } catch (error) {
+      console.error('Failed to create face preview:', error);
+      // Fallback: show original photo
+      if (this.photo1DataUrl) {
+        this.photo1Preview.style.backgroundImage = `url(${this.photo1DataUrl})`;
+        this.photo1Preview.classList.remove('hidden');
+      }
+    }
+  }
+
+  /**
+   * Create a canvas with the face properly positioned in an oval
+   * Uses same logic as collage.js
+   */
+  async createFacePreviewCanvas(imageDataUrl, faceInfo) {
+    const FACE_WIDTH = 500;
+    const FACE_HEIGHT = 620;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = FACE_WIDTH;
+    canvas.height = FACE_HEIGHT;
+    const ctx = canvas.getContext('2d');
+
+    // Load the processed image
+    const img = await loadImage(imageDataUrl);
+
+    // Get face coordinates in pixels
+    const faceData = this.getFacePixelCoords(img, faceInfo);
+
+    // Calculate scale to match target face height (75% of oval height)
+    const radiusY = FACE_HEIGHT / 2;
+    const targetFaceHeight = radiusY * 2 * 0.75;
+    const scale = targetFaceHeight / faceData.faceH;
+
+    // Calculate positioning
+    const scaledWidth = faceData.imgWidth * scale;
+    const scaledHeight = faceData.imgHeight * scale;
+    const scaledFaceX = faceData.faceX * scale;
+    const scaledFaceY = faceData.faceY * scale;
+    const scaledFaceW = faceData.faceW * scale;
+    const scaledFaceCenterX = scaledFaceX + scaledFaceW / 2;
+
+    const centerX = FACE_WIDTH / 2;
+    const centerY = FACE_HEIGHT / 2;
+    const faceTopY = centerY - radiusY + (radiusY * 2 - targetFaceHeight) / 2;
+
+    const offsetX = centerX - scaledFaceCenterX;
+    const offsetY = faceTopY - scaledFaceY;
+
+    // Draw the image with proper positioning
+    ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+
+    return canvas;
+  }
+
+  /**
+   * Get face coordinates in pixels (with fallback)
+   */
+  getFacePixelCoords(img, faceInfo) {
+    const imgWidth = img.width;
+    const imgHeight = img.height;
+
+    if (faceInfo && faceInfo.found) {
+      return {
+        faceX: faceInfo.x * imgWidth,
+        faceY: faceInfo.y * imgHeight,
+        faceW: faceInfo.width * imgWidth,
+        faceH: faceInfo.height * imgHeight,
+        imgWidth,
+        imgHeight
+      };
+    }
+
+    // Fallback: assume face is roughly in the upper-middle portion
+    return {
+      faceX: imgWidth * 0.25,
+      faceY: imgHeight * 0.15,
+      faceW: imgWidth * 0.5,
+      faceH: imgHeight * 0.4,
+      imgWidth,
+      imgHeight
+    };
   }
 
   showError(message) {
@@ -208,5 +323,6 @@ export class CameraScreen {
     this.stopCamera();
     this.currentPhotoIndex = 0;
     this.photo1DataUrl = null;
+    this.photo1FaceData = null;
   }
 }
