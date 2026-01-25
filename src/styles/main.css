@@ -294,15 +294,28 @@ p {
 /* Photo 1 preview overlay (shown when taking photo 2) */
 .camera-photo1-preview {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scaleX(-1); /* Center and mirror */
+  width: 60%;
+  height: 70%;
   background-size: cover;
   background-position: center;
-  opacity: 0.35;
+  opacity: 0.5;
   pointer-events: none;
-  transform: scaleX(-1); /* Mirror to match camera */
+  border-radius: 50%; /* Oval shape matching face guide */
+  overflow: hidden;
+}
+
+/* Mask for showing only left half of the oval */
+.camera-photo1-preview::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  background: black;
 }
 
 .camera-photo1-preview.hidden {
