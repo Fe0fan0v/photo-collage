@@ -29,10 +29,10 @@ async function fetchImageAsDataUrl(url) {
 }
 
 // Output dimensions
-const OUTPUT_SIZE = 1000;
-const PLATE_SIZE = 900;
-const FACE_WIDTH = 580;  // Oval width for face
-const FACE_HEIGHT = 720; // Oval height for face
+const OUTPUT_SIZE = 1100;
+const PLATE_SIZE = 1035;  // 900 * 1.15 = increased by 15%
+const FACE_WIDTH = 520;   // Oval width for face (smaller to stay inside plate)
+const FACE_HEIGHT = 650;  // Oval height for face
 
 /**
  * Create the final collage

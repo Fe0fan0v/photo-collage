@@ -292,24 +292,18 @@ p {
 }
 
 /* Photo 1 preview overlay (shown when taking photo 2) */
-/* Shows left half of processed face in left half of the oval guide */
+/* Shows left half of original photo exactly as captured */
 .camera-photo1-preview {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-100%, -50%); /* Position left edge at center */
-  width: 30%; /* Half of oval width (60% / 2) */
-  height: 70%;
-  background-size: 200% 100%;
-  background-position: left center; /* Show left half of the canvas */
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background-size: 200% 100%; /* Double width to show only left half */
+  background-position: left center;
   background-repeat: no-repeat;
-  opacity: 0.7;
+  opacity: 1;
   pointer-events: none;
-  border-top-left-radius: 50%;
-  border-bottom-left-radius: 50%;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  overflow: hidden;
 }
 
 .camera-photo1-preview.hidden {

@@ -147,12 +147,14 @@ export class CameraScreen {
         this.updateInstructionText();
         this.updateSideIndicator();
 
-        // Process photo 1 to get face data and show preview
+        // Show original photo preview immediately (left half)
+        this.showPhoto1Preview();
+
+        // Process photo 1 in background to get face data for final collage
         this.showProcessingIndicator();
         try {
           const processed = await processFace(photoBlob);
           this.photo1FaceData = processed;
-          await this.showPhoto1Preview();
         } catch (error) {
           console.error('Failed to process photo 1:', error);
           // Continue anyway with fallback positioning
@@ -216,28 +218,12 @@ export class CameraScreen {
     this.updateInstructionText();
   }
 
-  async showPhoto1Preview() {
-    if (!this.photo1Preview || !this.photo1FaceData) return;
+  showPhoto1Preview() {
+    if (!this.photo1Preview || !this.photo1DataUrl) return;
 
-    try {
-      // Create canvas for preview with correct face positioning
-      const previewCanvas = await this.createFacePreviewCanvas(
-        this.photo1FaceData.image,
-        this.photo1FaceData.face
-      );
-
-      // Convert canvas to data URL and set as background
-      const previewDataUrl = previewCanvas.toDataURL('image/png');
-      this.photo1Preview.style.backgroundImage = `url(${previewDataUrl})`;
-      this.photo1Preview.classList.remove('hidden');
-    } catch (error) {
-      console.error('Failed to create face preview:', error);
-      // Fallback: show original photo
-      if (this.photo1DataUrl) {
-        this.photo1Preview.style.backgroundImage = `url(${this.photo1DataUrl})`;
-        this.photo1Preview.classList.remove('hidden');
-      }
-    }
+    // Show original photo as-is (CSS will crop to left half)
+    this.photo1Preview.style.backgroundImage = `url(${this.photo1DataUrl})`;
+    this.photo1Preview.classList.remove('hidden');
   }
 
   /**
