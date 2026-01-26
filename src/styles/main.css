@@ -292,7 +292,7 @@ p {
 }
 
 /* Photo 1 preview overlay (shown when taking photo 2) */
-/* Shows cropped face in left half of the oval guide */
+/* Shows LEFT HALF of face filling the left half of oval guide */
 .camera-photo1-preview {
   position: absolute;
   top: 50%;
@@ -300,11 +300,14 @@ p {
   transform: translateY(-50%);
   width: 30%; /* Half of oval width */
   height: 70%; /* Same as oval height */
-  background-size: contain;
-  background-position: center;
+  background-size: cover; /* Fill the container */
+  background-position: right center; /* Align to right edge (center line) */
   background-repeat: no-repeat;
   opacity: 1;
   pointer-events: none;
+  border-top-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+  overflow: hidden;
 }
 
 .camera-photo1-preview.hidden {

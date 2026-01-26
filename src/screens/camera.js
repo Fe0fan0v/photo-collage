@@ -232,19 +232,19 @@ export class CameraScreen {
   }
 
   /**
-   * Create canvas with only the face area (from forehead to chin)
+   * Create canvas with only the LEFT HALF of the face (from forehead to chin)
    */
   async createCroppedFaceCanvas(imageUrl, faceInfo) {
     const img = await loadImage(imageUrl);
 
-    // Get face bounds with some padding for hair
+    // Get face bounds with padding for hair
     let faceX, faceY, faceW, faceH;
 
     if (faceInfo && faceInfo.found) {
-      // Add padding: 30% above for hair, 10% below for chin, 15% on sides
-      const paddingTop = faceInfo.height * 0.3;
-      const paddingBottom = faceInfo.height * 0.1;
-      const paddingSide = faceInfo.width * 0.15;
+      // Add padding: 40% above for hair, 15% below for chin, 20% on sides
+      const paddingTop = faceInfo.height * 0.4;
+      const paddingBottom = faceInfo.height * 0.15;
+      const paddingSide = faceInfo.width * 0.2;
 
       faceX = Math.max(0, faceInfo.x - paddingSide) * img.width;
       faceY = Math.max(0, faceInfo.y - paddingTop) * img.height;
@@ -256,20 +256,20 @@ export class CameraScreen {
       faceH = Math.min(faceH, img.height - faceY);
     } else {
       // Fallback: use center portion of image
-      faceX = img.width * 0.2;
-      faceY = img.height * 0.1;
-      faceW = img.width * 0.6;
-      faceH = img.height * 0.7;
+      faceX = img.width * 0.15;
+      faceY = img.height * 0.05;
+      faceW = img.width * 0.7;
+      faceH = img.height * 0.8;
     }
 
-    // Create canvas with face area only
+    // Create canvas with LEFT HALF of face only
     const canvas = document.createElement('canvas');
-    canvas.width = faceW;
+    canvas.width = faceW / 2;  // Only left half
     canvas.height = faceH;
     const ctx = canvas.getContext('2d');
 
-    // Draw cropped face
-    ctx.drawImage(img, faceX, faceY, faceW, faceH, 0, 0, faceW, faceH);
+    // Draw only left half of the cropped face
+    ctx.drawImage(img, faceX, faceY, faceW / 2, faceH, 0, 0, faceW / 2, faceH);
 
     return canvas.toDataURL('image/png');
   }
