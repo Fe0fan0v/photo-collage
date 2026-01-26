@@ -76,14 +76,15 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(80);
 
-  // Step 6: Draw faces on top of plate in oval shape
+  // Step 6: Draw faces on top of plate, clipped to plate circle
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
+  const plateRadius = PLATE_SIZE / 2;
 
-  // Clip to oval for faces
+  // Clip to plate circle (so faces don't extend beyond plate edge)
   ctx.save();
   ctx.beginPath();
-  ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, plateRadius - 5, 0, Math.PI * 2); // -5 for small margin
   ctx.clip();
 
   // Draw both face halves using detected face positions
@@ -98,12 +99,12 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(90);
 
-  // Step 7: Draw dividing line
+  // Step 7: Draw dividing line (within plate bounds)
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(centerX, centerY - radiusY);
-  ctx.lineTo(centerX, centerY + radiusY);
+  ctx.moveTo(centerX, centerY - plateRadius + 10);
+  ctx.lineTo(centerX, centerY + plateRadius - 10);
   ctx.stroke();
 
   onProgress(100);
