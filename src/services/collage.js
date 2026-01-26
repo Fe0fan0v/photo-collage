@@ -31,8 +31,8 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions
 const OUTPUT_SIZE = 1100;
 const PLATE_SIZE = 1035;  // 900 * 1.15 = increased by 15%
-const FACE_WIDTH = 720;   // Oval width for face
-const FACE_HEIGHT = 920;  // Oval height for face (small equal margin top/bottom)
+const FACE_WIDTH = 580;   // Oval width for face (fits inside plate ornament)
+const FACE_HEIGHT = 720;  // Oval height for face
 
 /**
  * Create the final collage
@@ -76,15 +76,14 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(80);
 
-  // Step 6: Draw faces on top of plate, clipped to plate circle
+  // Step 6: Draw faces on top of plate in oval shape
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
-  const plateRadius = PLATE_SIZE / 2;
 
-  // Clip to plate circle (so faces don't extend beyond plate edge)
+  // Clip to oval for faces
   ctx.save();
   ctx.beginPath();
-  ctx.arc(centerX, centerY, plateRadius - 5, 0, Math.PI * 2); // -5 for small margin
+  ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
   ctx.clip();
 
   // Draw both face halves using detected face positions
@@ -99,12 +98,12 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(90);
 
-  // Step 7: Draw dividing line (within plate bounds)
+  // Step 7: Draw dividing line
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(centerX, centerY - plateRadius + 10);
-  ctx.lineTo(centerX, centerY + plateRadius - 10);
+  ctx.moveTo(centerX, centerY - radiusY);
+  ctx.lineTo(centerX, centerY + radiusY);
   ctx.stroke();
 
   onProgress(100);
