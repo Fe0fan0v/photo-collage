@@ -152,12 +152,12 @@ export class CameraScreen {
         try {
           const processed = await processFace(photoBlob);
           this.photo1FaceData = processed;
-          // Show processed photo (background removed) as preview
-          this.showPhoto1Preview(processed.image);
+          // Show cropped face (background removed) as preview
+          await this.showPhoto1Preview(processed.image, processed.face);
         } catch (error) {
           console.error('Failed to process photo 1:', error);
-          // Fallback: show original photo
-          this.showPhoto1Preview(this.photo1DataUrl);
+          // Fallback: show original photo without cropping
+          await this.showPhoto1Preview(this.photo1DataUrl, null);
         }
         this.hideProcessingIndicator();
 
@@ -218,12 +218,60 @@ export class CameraScreen {
     this.updateInstructionText();
   }
 
-  showPhoto1Preview(imageUrl) {
+  async showPhoto1Preview(imageUrl, faceInfo) {
     if (!this.photo1Preview || !imageUrl) return;
 
-    // Show processed photo (background removed), CSS crops to left half
-    this.photo1Preview.style.backgroundImage = `url(${imageUrl})`;
-    this.photo1Preview.classList.remove('hidden');
+    try {
+      // Create canvas with cropped face only
+      const croppedFace = await this.createCroppedFaceCanvas(imageUrl, faceInfo);
+      this.photo1Preview.style.backgroundImage = `url(${croppedFace})`;
+      this.photo1Preview.classList.remove('hidden');
+    } catch (error) {
+      console.error('Failed to create cropped face preview:', error);
+    }
+  }
+
+  /**
+   * Create canvas with only the face area (from forehead to chin)
+   */
+  async createCroppedFaceCanvas(imageUrl, faceInfo) {
+    const img = await loadImage(imageUrl);
+
+    // Get face bounds with some padding for hair
+    let faceX, faceY, faceW, faceH;
+
+    if (faceInfo && faceInfo.found) {
+      // Add padding: 30% above for hair, 10% below for chin, 15% on sides
+      const paddingTop = faceInfo.height * 0.3;
+      const paddingBottom = faceInfo.height * 0.1;
+      const paddingSide = faceInfo.width * 0.15;
+
+      faceX = Math.max(0, faceInfo.x - paddingSide) * img.width;
+      faceY = Math.max(0, faceInfo.y - paddingTop) * img.height;
+      faceW = (faceInfo.width + paddingSide * 2) * img.width;
+      faceH = (faceInfo.height + paddingTop + paddingBottom) * img.height;
+
+      // Clamp to image bounds
+      faceW = Math.min(faceW, img.width - faceX);
+      faceH = Math.min(faceH, img.height - faceY);
+    } else {
+      // Fallback: use center portion of image
+      faceX = img.width * 0.2;
+      faceY = img.height * 0.1;
+      faceW = img.width * 0.6;
+      faceH = img.height * 0.7;
+    }
+
+    // Create canvas with face area only
+    const canvas = document.createElement('canvas');
+    canvas.width = faceW;
+    canvas.height = faceH;
+    const ctx = canvas.getContext('2d');
+
+    // Draw cropped face
+    ctx.drawImage(img, faceX, faceY, faceW, faceH, 0, 0, faceW, faceH);
+
+    return canvas.toDataURL('image/png');
   }
 
   /**
