@@ -242,11 +242,11 @@ export class CameraScreen {
 
   /**
    * Create a canvas with the face properly positioned in an oval
-   * Uses same logic as collage.js
+   * Uses same logic as collage.js - aligns by eye position
    */
   async createFacePreviewCanvas(imageDataUrl, faceInfo) {
-    const FACE_WIDTH = 500;
-    const FACE_HEIGHT = 620;
+    const FACE_WIDTH = 700;
+    const FACE_HEIGHT = 850;
 
     const canvas = document.createElement('canvas');
     canvas.width = FACE_WIDTH;
@@ -256,28 +256,28 @@ export class CameraScreen {
     // Load the processed image
     const img = await loadImage(imageDataUrl);
 
-    // Get face coordinates in pixels
+    // Get face and eye coordinates in pixels
     const faceData = this.getFacePixelCoords(img, faceInfo);
 
-    // Calculate scale to match target face height (75% of oval height)
+    // Use inter-eye distance for scaling (same as collage.js)
+    const radiusX = FACE_WIDTH / 2;
     const radiusY = FACE_HEIGHT / 2;
-    const targetFaceHeight = radiusY * 2 * 0.75;
-    const scale = targetFaceHeight / faceData.faceH;
+    const targetEyeDistance = radiusX * 2 * 0.35;
+    const scale = targetEyeDistance / faceData.eyeDistance;
 
-    // Calculate positioning
+    // Target eye position: eyes should be at ~35% from top of oval
+    const targetEyeY = FACE_HEIGHT * 0.35;
+
+    // Calculate positioning based on eye center
     const scaledWidth = faceData.imgWidth * scale;
     const scaledHeight = faceData.imgHeight * scale;
-    const scaledFaceX = faceData.faceX * scale;
-    const scaledFaceY = faceData.faceY * scale;
-    const scaledFaceW = faceData.faceW * scale;
-    const scaledFaceCenterX = scaledFaceX + scaledFaceW / 2;
+    const scaledEyeCenterX = faceData.eyeCenterX * scale;
+    const scaledEyeCenterY = faceData.eyeCenterY * scale;
 
     const centerX = FACE_WIDTH / 2;
-    const centerY = FACE_HEIGHT / 2;
-    const faceTopY = centerY - radiusY + (radiusY * 2 - targetFaceHeight) / 2;
 
-    const offsetX = centerX - scaledFaceCenterX;
-    const offsetY = faceTopY - scaledFaceY;
+    const offsetX = centerX - scaledEyeCenterX;
+    const offsetY = targetEyeY - scaledEyeCenterY;
 
     // Draw the image with proper positioning
     ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
@@ -286,29 +286,54 @@ export class CameraScreen {
   }
 
   /**
-   * Get face coordinates in pixels (with fallback)
+   * Get face and eye coordinates in pixels (with fallback)
    */
   getFacePixelCoords(img, faceInfo) {
     const imgWidth = img.width;
     const imgHeight = img.height;
 
     if (faceInfo && faceInfo.found) {
+      // Get eye data if available
+      let eyeCenterX, eyeCenterY, eyeDistance;
+
+      if (faceInfo.eyes) {
+        eyeCenterX = faceInfo.eyes.center.x * imgWidth;
+        eyeCenterY = faceInfo.eyes.center.y * imgHeight;
+        eyeDistance = faceInfo.eyes.distance * imgWidth;
+      } else {
+        // Estimate eye position from face bounds
+        eyeCenterX = (faceInfo.x + faceInfo.width / 2) * imgWidth;
+        eyeCenterY = (faceInfo.y + faceInfo.height * 0.35) * imgHeight;
+        eyeDistance = faceInfo.width * imgWidth * 0.4;
+      }
+
       return {
         faceX: faceInfo.x * imgWidth,
         faceY: faceInfo.y * imgHeight,
         faceW: faceInfo.width * imgWidth,
         faceH: faceInfo.height * imgHeight,
+        eyeCenterX,
+        eyeCenterY,
+        eyeDistance,
         imgWidth,
         imgHeight
       };
     }
 
     // Fallback: assume face is roughly in the upper-middle portion
+    const fallbackFaceW = imgWidth * 0.5;
+    const fallbackFaceH = imgHeight * 0.4;
+    const fallbackFaceX = imgWidth * 0.25;
+    const fallbackFaceY = imgHeight * 0.15;
+
     return {
-      faceX: imgWidth * 0.25,
-      faceY: imgHeight * 0.15,
-      faceW: imgWidth * 0.5,
-      faceH: imgHeight * 0.4,
+      faceX: fallbackFaceX,
+      faceY: fallbackFaceY,
+      faceW: fallbackFaceW,
+      faceH: fallbackFaceH,
+      eyeCenterX: fallbackFaceX + fallbackFaceW / 2,
+      eyeCenterY: fallbackFaceY + fallbackFaceH * 0.35,
+      eyeDistance: fallbackFaceW * 0.4,
       imgWidth,
       imgHeight
     };

@@ -3,3 +3,5 @@ uvicorn
 rembg
 python-multipart
 pillow
+mediapipe
+opencv-python

@@ -31,8 +31,8 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions
 const OUTPUT_SIZE = 1000;
 const PLATE_SIZE = 900;
-const FACE_WIDTH = 500;  // Oval width for face
-const FACE_HEIGHT = 620; // Oval height for face (taller than wide)
+const FACE_WIDTH = 700;  // Oval width for face (increased for larger face)
+const FACE_HEIGHT = 850; // Oval height for face (increased for larger face)
 
 /**
  * Create the final collage
@@ -157,67 +157,92 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
 
 /**
  * Draw two face halves side by side in oval shape
- * Aligns faces by top and bottom edges (forehead and chin line up)
+ * Aligns faces by eye positions for accurate matching
  */
 function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY, width, height) {
   const radiusX = width / 2;
   const radiusY = height / 2;
 
-  // Target face height in the final image (70% of oval height)
-  const targetFaceHeight = radiusY * 2 * 0.75;
-
-  // Get face info for both images
+  // Get face and eye info for both images
   const face1Info = getFacePixelCoords(faceImg1, face1);
   const face2Info = getFacePixelCoords(faceImg2, face2);
 
-  // Calculate scale for each face so their face heights match the target
-  const scale1 = targetFaceHeight / face1Info.faceH;
-  const scale2 = targetFaceHeight / face2Info.faceH;
+  // Use inter-eye distance for scaling (more reliable than face height)
+  // Target eye distance is ~35% of oval width
+  const targetEyeDistance = radiusX * 2 * 0.35;
 
-  // Calculate where the top of the face should be in the oval
-  // Center the face vertically with some padding at top for hair
-  const faceTopY = centerY - radiusY + (radiusY * 2 - targetFaceHeight) / 2;
+  const scale1 = targetEyeDistance / face1Info.eyeDistance;
+  const scale2 = targetEyeDistance / face2Info.eyeDistance;
 
-  // Draw face 1 (left half)
-  drawAlignedFace(ctx, faceImg1, face1Info, scale1, faceTopY, centerX, centerY, radiusX, radiusY, 'left');
+  // Target eye position: eyes should be at ~35% from top of oval
+  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.35);
 
-  // Draw face 2 (right half)
-  drawAlignedFace(ctx, faceImg2, face2Info, scale2, faceTopY, centerX, centerY, radiusX, radiusY, 'right');
+  // Draw face 1 (left half) - aligned by eyes
+  drawAlignedFaceByEyes(ctx, faceImg1, face1Info, scale1, targetEyeY, centerX, centerY, radiusX, radiusY, 'left');
+
+  // Draw face 2 (right half) - aligned by eyes
+  drawAlignedFaceByEyes(ctx, faceImg2, face2Info, scale2, targetEyeY, centerX, centerY, radiusX, radiusY, 'right');
 }
 
 /**
- * Get face coordinates in pixels (with fallback for undetected faces)
+ * Get face and eye coordinates in pixels (with fallback for undetected faces)
  */
 function getFacePixelCoords(faceImg, faceInfo) {
   const imgWidth = faceImg.width;
   const imgHeight = faceImg.height;
 
   if (faceInfo && faceInfo.found) {
+    // Get eye data if available
+    let eyeCenterX, eyeCenterY, eyeDistance;
+
+    if (faceInfo.eyes) {
+      eyeCenterX = faceInfo.eyes.center.x * imgWidth;
+      eyeCenterY = faceInfo.eyes.center.y * imgHeight;
+      eyeDistance = faceInfo.eyes.distance * imgWidth;
+    } else {
+      // Estimate eye position from face bounds
+      eyeCenterX = (faceInfo.x + faceInfo.width / 2) * imgWidth;
+      eyeCenterY = (faceInfo.y + faceInfo.height * 0.35) * imgHeight;
+      eyeDistance = faceInfo.width * imgWidth * 0.4;
+    }
+
     return {
       faceX: faceInfo.x * imgWidth,
       faceY: faceInfo.y * imgHeight,
       faceW: faceInfo.width * imgWidth,
       faceH: faceInfo.height * imgHeight,
+      eyeCenterX,
+      eyeCenterY,
+      eyeDistance,
       imgWidth,
       imgHeight
     };
   }
 
   // Fallback: assume face is roughly in the upper-middle portion
+  const fallbackFaceW = imgWidth * 0.5;
+  const fallbackFaceH = imgHeight * 0.4;
+  const fallbackFaceX = imgWidth * 0.25;
+  const fallbackFaceY = imgHeight * 0.15;
+
   return {
-    faceX: imgWidth * 0.25,
-    faceY: imgHeight * 0.15,
-    faceW: imgWidth * 0.5,
-    faceH: imgHeight * 0.4,
+    faceX: fallbackFaceX,
+    faceY: fallbackFaceY,
+    faceW: fallbackFaceW,
+    faceH: fallbackFaceH,
+    eyeCenterX: fallbackFaceX + fallbackFaceW / 2,
+    eyeCenterY: fallbackFaceY + fallbackFaceH * 0.35,
+    eyeDistance: fallbackFaceW * 0.4,
     imgWidth,
     imgHeight
   };
 }
 
 /**
- * Draw a single face aligned by the top edge of the detected face
+ * Draw a single face aligned by eye position
+ * This provides more accurate alignment than face bounds, especially with hair/beard
  */
-function drawAlignedFace(ctx, faceImg, faceInfo, scale, faceTopY, centerX, centerY, radiusX, radiusY, side) {
+function drawAlignedFaceByEyes(ctx, faceImg, faceInfo, scale, targetEyeY, centerX, centerY, radiusX, radiusY, side) {
   ctx.save();
 
   // Clip to left or right half
@@ -235,15 +260,13 @@ function drawAlignedFace(ctx, faceImg, faceInfo, scale, faceTopY, centerX, cente
   const scaledHeight = faceInfo.imgHeight * scale;
 
   // Position so that:
-  // 1. Top of detected face aligns with faceTopY
-  // 2. Center of face horizontally aligns with centerX
-  const scaledFaceX = faceInfo.faceX * scale;
-  const scaledFaceY = faceInfo.faceY * scale;
-  const scaledFaceW = faceInfo.faceW * scale;
-  const scaledFaceCenterX = scaledFaceX + scaledFaceW / 2;
+  // 1. Eye center Y aligns with targetEyeY
+  // 2. Eye center X aligns with centerX (face horizontally centered)
+  const scaledEyeCenterX = faceInfo.eyeCenterX * scale;
+  const scaledEyeCenterY = faceInfo.eyeCenterY * scale;
 
-  const offsetX = centerX - scaledFaceCenterX;
-  const offsetY = faceTopY - scaledFaceY;
+  const offsetX = centerX - scaledEyeCenterX;
+  const offsetY = targetEyeY - scaledEyeCenterY;
 
   ctx.drawImage(faceImg, offsetX, offsetY, scaledWidth, scaledHeight);
   ctx.restore();

@@ -1,7 +1,7 @@
 """
 Background Removal API
 Simple FastAPI server using rembg for background removal
-With face detection for accurate positioning
+With face detection using MediaPipe for accurate eye-based positioning
 """
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
@@ -11,6 +11,7 @@ from rembg import remove, new_session
 from PIL import Image
 import cv2
 import numpy as np
+import mediapipe as mp
 import io
 import base64
 
@@ -27,14 +28,33 @@ app.add_middleware(
 
 # Pre-load models on startup
 session = None
-face_cascade = None
+face_mesh = None
+face_cascade = None  # Fallback
+
+# MediaPipe face mesh landmarks for eyes
+# Left eye: landmarks around 33, 133, 159, 145 (outer corner, inner corner, top, bottom)
+# Right eye: landmarks around 362, 263, 386, 374
+LEFT_EYE_CENTER = 468  # MediaPipe provides iris center at 468
+RIGHT_EYE_CENTER = 473  # MediaPipe provides iris center at 473
+# Alternative: use eye corner landmarks
+LEFT_EYE_OUTER = 33
+LEFT_EYE_INNER = 133
+RIGHT_EYE_OUTER = 362
+RIGHT_EYE_INNER = 263
 
 @app.on_event("startup")
 async def startup_event():
-    global session, face_cascade
+    global session, face_mesh, face_cascade
     print("Loading rembg model...")
     session = new_session("u2net")
-    print("Loading face detection model...")
+    print("Loading MediaPipe face mesh model...")
+    face_mesh = mp.solutions.face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True,  # Includes iris landmarks
+        min_detection_confidence=0.5
+    )
+    print("Loading fallback face cascade...")
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     print("Models loaded!")
 
@@ -42,28 +62,108 @@ async def startup_event():
 async def health_check():
     return {"status": "ok", "model_loaded": session is not None}
 
-def detect_face(image_bytes):
-    """Detect face in image and return bounding box as percentage of image size"""
+def detect_face_with_eyes(image_bytes):
+    """
+    Detect face and eye positions using MediaPipe
+    Returns face bounding box and eye centers as percentages
+    """
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
     height, width = img.shape[:2]
 
-    # Detect faces
+    # Convert BGR to RGB for MediaPipe
+    rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # Process with MediaPipe
+    results = face_mesh.process(rgb_img)
+
+    if results.multi_face_landmarks:
+        landmarks = results.multi_face_landmarks[0].landmark
+
+        # Get eye centers using iris landmarks (more accurate)
+        # MediaPipe with refine_landmarks=True provides iris centers at 468 and 473
+        try:
+            left_eye = landmarks[LEFT_EYE_CENTER]
+            right_eye = landmarks[RIGHT_EYE_CENTER]
+        except IndexError:
+            # Fallback to eye corner midpoints if iris landmarks not available
+            left_outer = landmarks[LEFT_EYE_OUTER]
+            left_inner = landmarks[LEFT_EYE_INNER]
+            right_outer = landmarks[RIGHT_EYE_OUTER]
+            right_inner = landmarks[RIGHT_EYE_INNER]
+
+            left_eye_x = (left_outer.x + left_inner.x) / 2
+            left_eye_y = (left_outer.y + left_inner.y) / 2
+            right_eye_x = (right_outer.x + right_inner.x) / 2
+            right_eye_y = (right_outer.y + right_inner.y) / 2
+
+            class EyePoint:
+                def __init__(self, x, y):
+                    self.x = x
+                    self.y = y
+
+            left_eye = EyePoint(left_eye_x, left_eye_y)
+            right_eye = EyePoint(right_eye_x, right_eye_y)
+
+        # Calculate eye center (midpoint between eyes)
+        eye_center_x = (left_eye.x + right_eye.x) / 2
+        eye_center_y = (left_eye.y + right_eye.y) / 2
+
+        # Calculate inter-eye distance for scaling reference
+        eye_distance = np.sqrt(
+            (right_eye.x - left_eye.x) ** 2 +
+            (right_eye.y - left_eye.y) ** 2
+        )
+
+        # Get face bounding box from landmarks
+        x_coords = [lm.x for lm in landmarks]
+        y_coords = [lm.y for lm in landmarks]
+
+        min_x, max_x = min(x_coords), max(x_coords)
+        min_y, max_y = min(y_coords), max(y_coords)
+
+        face_width = max_x - min_x
+        face_height = max_y - min_y
+
+        return {
+            "x": min_x,
+            "y": min_y,
+            "width": face_width,
+            "height": face_height,
+            "found": True,
+            "eyes": {
+                "left": {"x": left_eye.x, "y": left_eye.y},
+                "right": {"x": right_eye.x, "y": right_eye.y},
+                "center": {"x": eye_center_x, "y": eye_center_y},
+                "distance": eye_distance
+            }
+        }
+
+    # Fallback to Haar cascade if MediaPipe fails
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
     if len(faces) > 0:
-        # Take the largest face
         x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
 
-        # Return as percentages of image dimensions
+        # Estimate eye positions (roughly 30% from top, 30% and 70% from left)
+        eye_y = (y + h * 0.35) / height
+        left_eye_x = (x + w * 0.3) / width
+        right_eye_x = (x + w * 0.7) / width
+
         return {
             "x": x / width,
             "y": y / height,
             "width": w / width,
             "height": h / height,
-            "found": True
+            "found": True,
+            "eyes": {
+                "left": {"x": left_eye_x, "y": eye_y},
+                "right": {"x": right_eye_x, "y": eye_y},
+                "center": {"x": (left_eye_x + right_eye_x) / 2, "y": eye_y},
+                "distance": (right_eye_x - left_eye_x),
+                "estimated": True  # Flag that these are estimated, not detected
+            }
         }
 
     return {"found": False}
@@ -96,8 +196,8 @@ async def remove_background_simple(file: UploadFile = File(...)):
 @app.post("/process-face")
 async def process_face(file: UploadFile = File(...)):
     """
-    Remove background and detect face position
-    Returns JSON with base64 image and face coordinates
+    Remove background and detect face position with eye landmarks
+    Returns JSON with base64 image, face coordinates, and eye positions
     """
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -105,8 +205,8 @@ async def process_face(file: UploadFile = File(...)):
     try:
         contents = await file.read()
 
-        # Detect face BEFORE removing background (better detection on original)
-        face_info = detect_face(contents)
+        # Detect face and eyes BEFORE removing background (better detection on original)
+        face_info = detect_face_with_eyes(contents)
 
         # Remove background
         input_image = Image.open(io.BytesIO(contents))

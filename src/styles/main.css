@@ -302,18 +302,18 @@ p {
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.6;
+  opacity: 1;
   pointer-events: none;
   border-radius: 50%; /* Oval shape matching face guide */
   overflow: hidden;
 }
 
-/* Mask for showing only left half of the oval */
+/* Mask for showing only left half of the oval (after mirror transform, this hides the right side) */
 .camera-photo1-preview::after {
   content: '';
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 0;
   width: 50%;
   height: 100%;
   background: black;
