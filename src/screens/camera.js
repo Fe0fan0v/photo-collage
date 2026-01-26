@@ -245,8 +245,8 @@ export class CameraScreen {
    * Uses same logic as collage.js - aligns by eye position
    */
   async createFacePreviewCanvas(imageDataUrl, faceInfo) {
-    const FACE_WIDTH = 700;
-    const FACE_HEIGHT = 850;
+    const FACE_WIDTH = 580;
+    const FACE_HEIGHT = 720;
 
     const canvas = document.createElement('canvas');
     canvas.width = FACE_WIDTH;
@@ -262,11 +262,11 @@ export class CameraScreen {
     // Use inter-eye distance for scaling (same as collage.js)
     const radiusX = FACE_WIDTH / 2;
     const radiusY = FACE_HEIGHT / 2;
-    const targetEyeDistance = radiusX * 2 * 0.35;
+    const targetEyeDistance = radiusX * 2 * 0.28;
     const scale = targetEyeDistance / faceData.eyeDistance;
 
-    // Target eye position: eyes should be at ~35% from top of oval
-    const targetEyeY = FACE_HEIGHT * 0.35;
+    // Target eye position: eyes should be at ~45% from top of oval
+    const targetEyeY = FACE_HEIGHT * 0.45;
 
     // Calculate positioning based on eye center
     const scaledWidth = faceData.imgWidth * scale;

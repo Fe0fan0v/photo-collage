@@ -31,8 +31,8 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions
 const OUTPUT_SIZE = 1000;
 const PLATE_SIZE = 900;
-const FACE_WIDTH = 700;  // Oval width for face (increased for larger face)
-const FACE_HEIGHT = 850; // Oval height for face (increased for larger face)
+const FACE_WIDTH = 580;  // Oval width for face
+const FACE_HEIGHT = 720; // Oval height for face
 
 /**
  * Create the final collage
@@ -167,15 +167,15 @@ function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY,
   const face1Info = getFacePixelCoords(faceImg1, face1);
   const face2Info = getFacePixelCoords(faceImg2, face2);
 
-  // Use inter-eye distance for scaling (more reliable than face height)
-  // Target eye distance is ~35% of oval width
-  const targetEyeDistance = radiusX * 2 * 0.35;
+  // Use inter-eye distance for scaling
+  // Target eye distance is ~28% of oval width (smaller = more space for hair)
+  const targetEyeDistance = radiusX * 2 * 0.28;
 
   const scale1 = targetEyeDistance / face1Info.eyeDistance;
   const scale2 = targetEyeDistance / face2Info.eyeDistance;
 
-  // Target eye position: eyes should be at ~35% from top of oval
-  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.35);
+  // Target eye position: eyes should be at ~45% from top of oval (lower = more space for hair)
+  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.45);
 
   // Draw face 1 (left half) - aligned by eyes
   drawAlignedFaceByEyes(ctx, faceImg1, face1Info, scale1, targetEyeY, centerX, centerY, radiusX, radiusY, 'left');

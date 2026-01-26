@@ -295,28 +295,20 @@ p {
 .camera-photo1-preview {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 25%; /* Position to the left side */
   transform: translate(-50%, -50%) scaleX(-1); /* Center and mirror */
-  width: 60%;
+  width: 30%; /* Half of oval width */
   height: 70%;
-  background-size: 100% 100%;
-  background-position: center;
+  background-size: 200% 100%; /* Show only left half of the image */
+  background-position: left center;
   background-repeat: no-repeat;
-  opacity: 1;
+  opacity: 0.7;
   pointer-events: none;
-  border-radius: 50%; /* Oval shape matching face guide */
+  border-top-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   overflow: hidden;
-}
-
-/* Mask for showing only left half of the oval (after mirror transform, this hides the right side) */
-.camera-photo1-preview::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: black;
 }
 
 .camera-photo1-preview.hidden {
