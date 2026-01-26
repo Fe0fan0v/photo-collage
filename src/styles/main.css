@@ -300,8 +300,8 @@ p {
   transform: translateY(-50%);
   width: 30%; /* Half of oval width */
   height: 70%; /* Same as oval height */
-  background-size: cover; /* Fill the container */
-  background-position: right center; /* Align to right edge (center line) */
+  background-size: 100% 100%; /* Stretch to fill container */
+  background-position: center;
   background-repeat: no-repeat;
   opacity: 1;
   pointer-events: none;

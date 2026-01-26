@@ -174,8 +174,8 @@ function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY,
   const scale1 = targetEyeDistance / face1Info.eyeDistance;
   const scale2 = targetEyeDistance / face2Info.eyeDistance;
 
-  // Target eye position: eyes should be at ~45% from top of oval (lower = more space for hair)
-  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.45);
+  // Target eye position: eyes should be at ~40% from top of oval
+  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.40);
 
   // Draw face 1 (left half) - aligned by eyes
   drawAlignedFaceByEyes(ctx, faceImg1, face1Info, scale1, targetEyeY, centerX, centerY, radiusX, radiusY, 'left');
