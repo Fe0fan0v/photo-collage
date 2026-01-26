@@ -292,15 +292,15 @@ p {
 }
 
 /* Photo 1 preview overlay (shown when taking photo 2) */
-/* Shows left half of original photo exactly as captured */
+/* Shows left half of processed photo (background removed) at original scale */
 .camera-photo1-preview {
   position: absolute;
   top: 0;
   left: 0;
   width: 50%;
   height: 100%;
-  background-size: 200% 100%; /* Double width to show only left half */
-  background-position: left center;
+  background-size: cover;
+  background-position: right center; /* Align right edge of image to right edge of container (center line) */
   background-repeat: no-repeat;
   opacity: 1;
   pointer-events: none;

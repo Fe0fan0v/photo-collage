@@ -147,17 +147,17 @@ export class CameraScreen {
         this.updateInstructionText();
         this.updateSideIndicator();
 
-        // Show original photo preview immediately (left half)
-        this.showPhoto1Preview();
-
-        // Process photo 1 in background to get face data for final collage
+        // Process photo 1 to remove background, then show preview
         this.showProcessingIndicator();
         try {
           const processed = await processFace(photoBlob);
           this.photo1FaceData = processed;
+          // Show processed photo (background removed) as preview
+          this.showPhoto1Preview(processed.image);
         } catch (error) {
           console.error('Failed to process photo 1:', error);
-          // Continue anyway with fallback positioning
+          // Fallback: show original photo
+          this.showPhoto1Preview(this.photo1DataUrl);
         }
         this.hideProcessingIndicator();
 
@@ -218,11 +218,11 @@ export class CameraScreen {
     this.updateInstructionText();
   }
 
-  showPhoto1Preview() {
-    if (!this.photo1Preview || !this.photo1DataUrl) return;
+  showPhoto1Preview(imageUrl) {
+    if (!this.photo1Preview || !imageUrl) return;
 
-    // Show original photo as-is (CSS will crop to left half)
-    this.photo1Preview.style.backgroundImage = `url(${this.photo1DataUrl})`;
+    // Show processed photo (background removed), CSS crops to left half
+    this.photo1Preview.style.backgroundImage = `url(${imageUrl})`;
     this.photo1Preview.classList.remove('hidden');
   }
 
