@@ -295,12 +295,12 @@ p {
 .camera-photo1-preview {
   position: absolute;
   top: 50%;
-  left: 25%; /* Position to the left side */
-  transform: translate(-50%, -50%) scaleX(-1); /* Center and mirror */
+  right: 50%; /* Right edge at center line */
+  transform: translateY(-50%);
   width: 30%; /* Half of oval width */
   height: 70%;
-  background-size: 200% 100%; /* Show only left half of the image */
-  background-position: left center;
+  background-size: 200% 100%; /* Show only right half of the image (which is left half of face due to mirror) */
+  background-position: right center;
   background-repeat: no-repeat;
   opacity: 0.7;
   pointer-events: none;
