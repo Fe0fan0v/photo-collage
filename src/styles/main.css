@@ -245,6 +245,7 @@ p {
   max-height: calc(100vh - 250px);
   max-height: calc(100dvh - 250px);
   width: 100%;
+  aspect-ratio: 4 / 3;
 }
 
 /* Desktop optimizations */
@@ -296,10 +297,10 @@ p {
 .camera-photo1-preview {
   position: absolute;
   top: 50%;
-  left: 20%; /* Left edge of oval (50% - 30%) */
+  left: 19%; /* Left edge of oval (50% - 31%) */
   transform: translateY(-50%);
-  width: 30%; /* Half of oval width */
-  height: 70%; /* Same as oval height */
+  width: 31%; /* Half of oval width + небольшой запас */
+  height: 72%; /* Чуть больше овала для лучшего совпадения */
   background-size: 100% 100%; /* Stretch to fill container */
   background-position: center;
   background-repeat: no-repeat;
