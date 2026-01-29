@@ -31,8 +31,8 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions
 const OUTPUT_SIZE = 1100;
 const PLATE_SIZE = 1035;  // 900 * 1.15 = increased by 15%
-const FACE_WIDTH = 580;   // Oval width for face (fits inside plate ornament)
-const FACE_HEIGHT = 720;  // Oval height for face
+const FACE_WIDTH = 900;   // Increased to fill more of the plate (like reference)
+const FACE_HEIGHT = 900;  // Increased to fill more of the plate (like reference)
 
 /**
  * Create the final collage
