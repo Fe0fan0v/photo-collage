@@ -139,6 +139,35 @@ function drawBackgroundPattern(ctx, size) {
 }
 
 /**
+ * Remove white background from plate image
+ */
+function removeWhiteBackground(plateImg) {
+  const canvas = document.createElement('canvas');
+  canvas.width = plateImg.width;
+  canvas.height = plateImg.height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(plateImg, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  // Make white pixels transparent
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+
+    // If pixel is close to white (threshold for brightness)
+    if (r > 240 && g > 240 && b > 240) {
+      data[i + 3] = 0; // Set alpha to 0 (transparent)
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+/**
  * Draw plate as circular image
  */
 function drawPlate(ctx, plateImg, centerX, centerY, size) {
@@ -155,7 +184,9 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
   const offsetX = centerX - scaledWidth / 2;
   const offsetY = centerY - scaledHeight / 2;
 
-  ctx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
+  // Remove white background before drawing
+  const plateWithoutBg = removeWhiteBackground(plateImg);
+  ctx.drawImage(plateWithoutBg, offsetX, offsetY, scaledWidth, scaledHeight);
   ctx.restore();
 }
 
