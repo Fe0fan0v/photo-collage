@@ -76,12 +76,18 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(80);
 
-  // Step 6: Draw faces on top of plate in oval shape
+  // Step 6: Draw faces on top of plate in oval shape, clipped by plate circle
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
+  const plateRadius = PLATE_SIZE / 2;
 
-  // Clip to oval for faces
+  // Clip to plate circle first (so faces don't go beyond plate edge)
   ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, plateRadius, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Then clip to oval for faces (intersection of circle and oval)
   ctx.beginPath();
   ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
   ctx.clip();
@@ -108,29 +114,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(100);
 
-  // Crop to bottom edge of plate with circular mask (like in reference)
-  const plateRadius = PLATE_SIZE / 2;
-  // Add margin to match visual plate edge
-  const cropRadius = plateRadius + 25;
-  const bottomEdge = Math.round(centerY + cropRadius);
-
-  // Create cropped canvas
-  const croppedCanvas = document.createElement('canvas');
-  croppedCanvas.width = OUTPUT_SIZE;
-  croppedCanvas.height = bottomEdge;
-  const croppedCtx = croppedCanvas.getContext('2d');
-
-  // Apply circular mask matching the plate
-  croppedCtx.save();
-  croppedCtx.beginPath();
-  croppedCtx.arc(centerX, centerY, cropRadius, 0, Math.PI * 2);
-  croppedCtx.clip();
-
-  // Copy from original canvas with mask applied
-  croppedCtx.drawImage(canvas, 0, 0);
-  croppedCtx.restore();
-
-  return croppedCanvas.toDataURL('image/jpeg', 0.92);
+  // Return full canvas - faces are already clipped to plate edge
+  return canvas.toDataURL('image/jpeg', 0.92);
 }
 
 /**
