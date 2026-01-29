@@ -80,8 +80,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
   const plateRadius = PLATE_SIZE / 2;
-  // Match actual plate edge (excluding white background, ~87% of image)
-  const faceClipRadius = 450;
+  // Match actual plate edge (excluding white background)
+  const faceClipRadius = 420;
 
   // Apply circular plate mask
   ctx.save();
