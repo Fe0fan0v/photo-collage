@@ -71,33 +71,45 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   // Step 4: Draw background pattern
   drawBackgroundPattern(ctx, OUTPUT_SIZE);
 
-  // Step 5: Draw plate (circular, centered)
-  drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
+  // Step 5: Create plate mask for clipping faces
+  const plateMask = createPlateMask(plateImg);
 
-  onProgress(80);
+  onProgress(75);
 
-  // Step 6: Draw faces clipped to plate circle
+  // Step 6: Draw faces clipped by plate mask
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
-  const plateRadius = PLATE_SIZE / 2;
-  // Match actual plate edge (excluding white background)
-  const faceClipRadius = 480;
 
-  // Apply circular plate mask
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceClipRadius, 0, Math.PI * 2);
-  ctx.clip();
+  // Create temporary canvas for faces
+  const facesCanvas = document.createElement('canvas');
+  facesCanvas.width = OUTPUT_SIZE;
+  facesCanvas.height = OUTPUT_SIZE;
+  const facesCtx = facesCanvas.getContext('2d');
 
-  // Draw both face halves (they have their own left/right masks)
+  // Draw faces on temporary canvas
   drawFaceHalves(
-    ctx,
+    facesCtx,
     faceImg1, processedFaces[0].face,
     faceImg2, processedFaces[1].face,
     centerX, centerY, FACE_WIDTH, FACE_HEIGHT
   );
 
-  ctx.restore();
+  // Apply plate mask to faces
+  facesCtx.globalCompositeOperation = 'destination-in';
+  const scale = Math.max(PLATE_SIZE / plateMask.width, PLATE_SIZE / plateMask.height);
+  const scaledWidth = plateMask.width * scale;
+  const scaledHeight = plateMask.height * scale;
+  const offsetX = centerX - scaledWidth / 2;
+  const offsetY = centerY - scaledHeight / 2;
+  facesCtx.drawImage(plateMask, offsetX, offsetY, scaledWidth, scaledHeight);
+
+  // Draw masked faces onto main canvas
+  ctx.drawImage(facesCanvas, 0, 0);
+
+  onProgress(80);
+
+  // Step 7: Draw plate on top
+  drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
 
   onProgress(90);
 
@@ -160,6 +172,44 @@ function removeWhiteBackground(plateImg) {
     // If pixel is close to white (lower threshold to catch more light pixels)
     if (r > 220 && g > 220 && b > 220) {
       data[i + 3] = 0; // Set alpha to 0 (transparent)
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+/**
+ * Create mask from plate image (white = transparent, colored = opaque)
+ */
+function createPlateMask(plateImg) {
+  const canvas = document.createElement('canvas');
+  canvas.width = plateImg.width;
+  canvas.height = plateImg.height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(plateImg, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  // Create mask: white pixels = transparent (0), colored pixels = opaque (255)
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+
+    // If pixel is white/light (background)
+    if (r > 220 && g > 220 && b > 220) {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0; // Transparent
+    } else {
+      // Colored pixel (plate)
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+      data[i + 3] = 255; // Opaque white
     }
   }
 
