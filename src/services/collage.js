@@ -81,7 +81,7 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const radiusY = FACE_HEIGHT / 2;
   const plateRadius = PLATE_SIZE / 2;
   // Match actual plate edge (excluding white background)
-  const faceClipRadius = 420;
+  const faceClipRadius = 480;
 
   // Apply circular plate mask
   ctx.save();
@@ -151,14 +151,14 @@ function removeWhiteBackground(plateImg) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
 
-  // Make white pixels transparent
+  // Make white/light pixels transparent
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
 
-    // If pixel is close to white (threshold for brightness)
-    if (r > 240 && g > 240 && b > 240) {
+    // If pixel is close to white (lower threshold to catch more light pixels)
+    if (r > 220 && g > 220 && b > 220) {
       data[i + 3] = 0; // Set alpha to 0 (transparent)
     }
   }
