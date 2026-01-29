@@ -80,11 +80,13 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
   const plateRadius = PLATE_SIZE / 2;
+  // Reduce radius to match actual visible plate edge
+  const faceClipRadius = plateRadius - 20;
 
   // Apply circular plate mask
   ctx.save();
   ctx.beginPath();
-  ctx.arc(centerX, centerY, plateRadius, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, faceClipRadius, 0, Math.PI * 2);
   ctx.clip();
 
   // Draw both face halves (they have their own left/right masks)
