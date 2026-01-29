@@ -12,10 +12,10 @@
 import { loadImage, blobToBase64 } from '../utils/helpers.js';
 import { processMultipleFaces } from './background-removal.js';
 
-// Import plate images
-import plate1Url from '../assets/plate-1.jpg';
-import plate2Url from '../assets/plate-2.jpg';
-import plate3Url from '../assets/plate-3.jpg';
+// Import plate images (PNG with transparency)
+import plate1Url from '../assets/plate-1.png';
+import plate2Url from '../assets/plate-2.png';
+import plate3Url from '../assets/plate-3.png';
 
 const PLATE_URLS = [plate1Url, plate2Url, plate3Url];
 
@@ -71,32 +71,42 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   // Step 4: Draw background pattern
   drawBackgroundPattern(ctx, OUTPUT_SIZE);
 
-  // Step 5: Draw plate (circular, centered)
+  // Step 5: Draw plate PNG (with transparency)
   drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
 
-  onProgress(80);
+  onProgress(75);
 
-  // Step 6: Draw faces clipped to plate circle
+  // Step 6: Draw faces clipped to plate shape using PNG alpha mask
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
-  const plateRadius = PLATE_SIZE / 2;
-  const faceClipRadius = 460;
 
-  // Apply circular plate mask
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceClipRadius, 0, Math.PI * 2);
-  ctx.clip();
+  // Create temporary canvas for faces
+  const facesCanvas = document.createElement('canvas');
+  facesCanvas.width = OUTPUT_SIZE;
+  facesCanvas.height = OUTPUT_SIZE;
+  const facesCtx = facesCanvas.getContext('2d');
 
-  // Draw both face halves
+  // Draw both face halves on temporary canvas
   drawFaceHalves(
-    ctx,
+    facesCtx,
     faceImg1, processedFaces[0].face,
     faceImg2, processedFaces[1].face,
     centerX, centerY, FACE_WIDTH, FACE_HEIGHT
   );
 
-  ctx.restore();
+  // Apply plate PNG alpha channel as mask
+  facesCtx.globalCompositeOperation = 'destination-in';
+  const scale = Math.max(PLATE_SIZE / plateImg.width, PLATE_SIZE / plateImg.height);
+  const scaledWidth = plateImg.width * scale;
+  const scaledHeight = plateImg.height * scale;
+  const offsetX = centerX - scaledWidth / 2;
+  const offsetY = centerY - scaledHeight / 2;
+  facesCtx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
+
+  // Draw masked faces onto main canvas
+  ctx.drawImage(facesCanvas, 0, 0);
+
+  onProgress(80);
 
   onProgress(90);
 
@@ -205,24 +215,17 @@ function createPlateMask(plateImg) {
 }
 
 /**
- * Draw plate as circular image
+ * Draw plate PNG (with alpha transparency)
  */
 function drawPlate(ctx, plateImg, centerX, centerY, size) {
-  const radius = size / 2;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.clip();
-
   const scale = Math.max(size / plateImg.width, size / plateImg.height);
   const scaledWidth = plateImg.width * scale;
   const scaledHeight = plateImg.height * scale;
   const offsetX = centerX - scaledWidth / 2;
   const offsetY = centerY - scaledHeight / 2;
 
+  // Draw PNG with transparency
   ctx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
-  ctx.restore();
 }
 
 /**
