@@ -222,9 +222,8 @@ function drawPlate(ctx, plateImg, centerX, centerY, size) {
   const offsetX = centerX - scaledWidth / 2;
   const offsetY = centerY - scaledHeight / 2;
 
-  // Remove white background before drawing
-  const plateWithoutBg = removeWhiteBackground(plateImg);
-  ctx.drawImage(plateWithoutBg, offsetX, offsetY, scaledWidth, scaledHeight);
+  // Draw plate with white background
+  ctx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
   ctx.restore();
 }
 
