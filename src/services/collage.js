@@ -110,8 +110,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   // Crop to bottom edge of plate (like in reference)
   const plateRadius = PLATE_SIZE / 2;
-  // Add small margin to ensure we cut exactly at plate edge
-  const bottomEdge = Math.round(centerY + plateRadius + 2);
+  // Add margin to ensure we cut exactly at plate edge
+  const bottomEdge = Math.round(centerY + plateRadius + 10);
 
   // Create cropped canvas
   const croppedCanvas = document.createElement('canvas');
