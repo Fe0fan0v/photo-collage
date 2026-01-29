@@ -235,13 +235,14 @@ p {
 
 /* Camera screen */
 .camera-container {
+  flex: 1;
   position: relative;
   background: black;
   border-radius: var(--border-radius);
   overflow: hidden;
   margin-bottom: 10px;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  min-height: 300px;
   max-height: calc(100vh - 250px);
   max-height: calc(100dvh - 250px);
 }
