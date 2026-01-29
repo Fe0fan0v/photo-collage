@@ -81,7 +81,7 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const radiusY = FACE_HEIGHT / 2;
   const plateRadius = PLATE_SIZE / 2;
   // Increase clip radius to match visual plate edge (includes border)
-  const faceClipRadius = plateRadius + 30;
+  const faceClipRadius = plateRadius + 50;
 
   // Clip to plate circle first (so faces don't go beyond plate edge)
   ctx.save();
