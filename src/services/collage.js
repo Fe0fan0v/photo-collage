@@ -80,18 +80,14 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
   const plateRadius = PLATE_SIZE / 2;
-  // Increase clip radius to match visual plate edge (includes border)
-  const faceClipRadius = plateRadius + 50;
 
-  // Clip to plate circle first (so faces don't go beyond plate edge)
+  // Extend oval vertically to reach plate edge at bottom
+  const extendedRadiusY = plateRadius;
+
+  // Clip to oval for faces (extended to plate edge)
   ctx.save();
   ctx.beginPath();
-  ctx.arc(centerX, centerY, faceClipRadius, 0, Math.PI * 2);
-  ctx.clip();
-
-  // Then clip to oval for faces (intersection of circle and oval)
-  ctx.beginPath();
-  ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+  ctx.ellipse(centerX, centerY, radiusX, extendedRadiusY, 0, 0, Math.PI * 2);
   ctx.clip();
 
   // Draw both face halves using detected face positions
