@@ -71,45 +71,33 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   // Step 4: Draw background pattern
   drawBackgroundPattern(ctx, OUTPUT_SIZE);
 
-  // Step 5: Create plate mask for clipping faces
-  const plateMask = createPlateMask(plateImg);
+  // Step 5: Draw plate (circular, centered)
+  drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
 
-  onProgress(75);
+  onProgress(80);
 
-  // Step 6: Draw faces clipped by plate mask
+  // Step 6: Draw faces clipped to plate circle
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
+  const plateRadius = PLATE_SIZE / 2;
+  // Adjust radius to match visible plate edge (trial and error)
+  const faceClipRadius = 460;
 
-  // Create temporary canvas for faces
-  const facesCanvas = document.createElement('canvas');
-  facesCanvas.width = OUTPUT_SIZE;
-  facesCanvas.height = OUTPUT_SIZE;
-  const facesCtx = facesCanvas.getContext('2d');
+  // Apply circular plate mask
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, faceClipRadius, 0, Math.PI * 2);
+  ctx.clip();
 
-  // Draw faces on temporary canvas
+  // Draw both face halves (they have their own left/right masks)
   drawFaceHalves(
-    facesCtx,
+    ctx,
     faceImg1, processedFaces[0].face,
     faceImg2, processedFaces[1].face,
     centerX, centerY, FACE_WIDTH, FACE_HEIGHT
   );
 
-  // Apply plate mask to faces
-  facesCtx.globalCompositeOperation = 'destination-in';
-  const scale = Math.max(PLATE_SIZE / plateMask.width, PLATE_SIZE / plateMask.height);
-  const scaledWidth = plateMask.width * scale;
-  const scaledHeight = plateMask.height * scale;
-  const offsetX = centerX - scaledWidth / 2;
-  const offsetY = centerY - scaledHeight / 2;
-  facesCtx.drawImage(plateMask, offsetX, offsetY, scaledWidth, scaledHeight);
-
-  // Draw masked faces onto main canvas
-  ctx.drawImage(facesCanvas, 0, 0);
-
-  onProgress(80);
-
-  // Step 7: Draw plate on top
-  drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
+  ctx.restore();
 
   onProgress(90);
 
