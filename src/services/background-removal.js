@@ -4,8 +4,8 @@
  * Now includes face detection for accurate positioning
  */
 
-// API endpoint - same host, different port
-const API_URL = `${window.location.protocol}//${window.location.hostname}:3008`;
+// API endpoint - through Nginx /api/ proxy
+const API_URL = `${window.location.protocol}//${window.location.hostname}/api`;
 
 let isApiReady = false;
 
