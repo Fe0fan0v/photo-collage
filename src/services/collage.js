@@ -29,10 +29,10 @@ async function fetchImageAsDataUrl(url) {
 }
 
 // Output dimensions
-const OUTPUT_SIZE = 1100;
-const PLATE_SIZE = 1035;  // 900 * 1.15 = increased by 15%
-const FACE_WIDTH = 900;   // Increased to fill more of the plate (like reference)
-const FACE_HEIGHT = 900;  // Increased to fill more of the plate (like reference)
+const OUTPUT_SIZE = 900;   // Reduced for smaller final image
+const PLATE_SIZE = 850;    // Proportional reduction
+const FACE_WIDTH = 740;    // Proportional reduction (~82% of plate)
+const FACE_HEIGHT = 740;   // Proportional reduction
 
 /**
  * Create the final collage
@@ -241,8 +241,8 @@ function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY,
   const face2Info = getFacePixelCoords(faceImg2, face2);
 
   // Use inter-eye distance for scaling
-  // Target eye distance is ~28% of oval width (smaller = more space for hair)
-  const targetEyeDistance = radiusX * 2 * 0.28;
+  // Target eye distance is ~35% of oval width (larger = closer zoom, less cropping)
+  const targetEyeDistance = radiusX * 2 * 0.35;
 
   const scale1 = targetEyeDistance / face1Info.eyeDistance;
   const scale2 = targetEyeDistance / face2Info.eyeDistance;
