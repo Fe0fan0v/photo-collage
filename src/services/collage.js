@@ -76,38 +76,25 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(80);
 
-  // Step 6: Draw faces in oval shape, then clip to plate circle
+  // Step 6: Draw faces clipped to plate circle
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
   const plateRadius = PLATE_SIZE / 2;
 
-  // Create temporary canvas for faces with oval mask
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = OUTPUT_SIZE;
-  tempCanvas.height = OUTPUT_SIZE;
-  const tempCtx = tempCanvas.getContext('2d');
+  // Apply circular plate mask
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, plateRadius, 0, Math.PI * 2);
+  ctx.clip();
 
-  // Draw faces in oval on temporary canvas
-  tempCtx.save();
-  tempCtx.beginPath();
-  tempCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-  tempCtx.clip();
-
+  // Draw both face halves (they have their own left/right masks)
   drawFaceHalves(
-    tempCtx,
+    ctx,
     faceImg1, processedFaces[0].face,
     faceImg2, processedFaces[1].face,
     centerX, centerY, FACE_WIDTH, FACE_HEIGHT
   );
 
-  tempCtx.restore();
-
-  // Copy oval faces to main canvas with circular plate mask
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, plateRadius, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.drawImage(tempCanvas, 0, 0);
   ctx.restore();
 
   onProgress(90);
