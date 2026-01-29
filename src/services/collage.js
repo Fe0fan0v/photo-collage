@@ -13,9 +13,9 @@ import { loadImage, blobToBase64 } from '../utils/helpers.js';
 import { processMultipleFaces } from './background-removal.js';
 
 // Import plate images
-import plate1Url from '../assets/plate-1.png';
-import plate2Url from '../assets/plate-2.png';
-import plate3Url from '../assets/plate-3.png';
+import plate1Url from '../assets/plate-1.jpg';
+import plate2Url from '../assets/plate-2.jpg';
+import plate3Url from '../assets/plate-3.jpg';
 
 const PLATE_URLS = [plate1Url, plate2Url, plate3Url];
 
@@ -71,40 +71,32 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   // Step 4: Draw background pattern
   drawBackgroundPattern(ctx, OUTPUT_SIZE);
 
-  // Step 5: Draw faces with plate mask (using PNG alpha channel)
+  // Step 5: Draw plate (circular, centered)
+  drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
+
+  onProgress(80);
+
+  // Step 6: Draw faces clipped to plate circle
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
+  const plateRadius = PLATE_SIZE / 2;
+  const faceClipRadius = 460;
 
-  // Create temporary canvas for faces
-  const facesCanvas = document.createElement('canvas');
-  facesCanvas.width = OUTPUT_SIZE;
-  facesCanvas.height = OUTPUT_SIZE;
-  const facesCtx = facesCanvas.getContext('2d');
+  // Apply circular plate mask
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, faceClipRadius, 0, Math.PI * 2);
+  ctx.clip();
 
-  // Draw both face halves on temporary canvas
+  // Draw both face halves
   drawFaceHalves(
-    facesCtx,
+    ctx,
     faceImg1, processedFaces[0].face,
     faceImg2, processedFaces[1].face,
     centerX, centerY, FACE_WIDTH, FACE_HEIGHT
   );
 
-  // Apply plate alpha mask to faces
-  facesCtx.globalCompositeOperation = 'destination-in';
-  const scale = Math.max(PLATE_SIZE / plateImg.width, PLATE_SIZE / plateImg.height);
-  const scaledWidth = plateImg.width * scale;
-  const scaledHeight = plateImg.height * scale;
-  const offsetX = centerX - scaledWidth / 2;
-  const offsetY = centerY - scaledHeight / 2;
-  facesCtx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
-
-  // Copy masked faces to main canvas
-  ctx.drawImage(facesCanvas, 0, 0);
-
-  onProgress(80);
-
-  // Step 6: Draw plate on top
-  drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
+  ctx.restore();
 
   onProgress(90);
 
@@ -213,17 +205,24 @@ function createPlateMask(plateImg) {
 }
 
 /**
- * Draw plate (PNG with transparency, no clipping needed)
+ * Draw plate as circular image
  */
 function drawPlate(ctx, plateImg, centerX, centerY, size) {
+  const radius = size / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.clip();
+
   const scale = Math.max(size / plateImg.width, size / plateImg.height);
   const scaledWidth = plateImg.width * scale;
   const scaledHeight = plateImg.height * scale;
   const offsetX = centerX - scaledWidth / 2;
   const offsetY = centerY - scaledHeight / 2;
 
-  // Draw plate PNG with alpha transparency
   ctx.drawImage(plateImg, offsetX, offsetY, scaledWidth, scaledHeight);
+  ctx.restore();
 }
 
 /**
