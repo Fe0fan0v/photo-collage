@@ -108,10 +108,9 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(100);
 
-  // Crop to bottom edge of plate (like in reference)
-  // Use slightly larger radius to include white background around plate
+  // Crop to bottom edge of plate with circular mask (like in reference)
   const plateRadius = PLATE_SIZE / 2;
-  const bottomEdge = Math.round(centerY + plateRadius + 30);
+  const bottomEdge = Math.round(centerY + plateRadius);
 
   // Create cropped canvas
   const croppedCanvas = document.createElement('canvas');
@@ -119,8 +118,15 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   croppedCanvas.height = bottomEdge;
   const croppedCtx = croppedCanvas.getContext('2d');
 
-  // Copy from original canvas
+  // Apply circular mask matching the plate
+  croppedCtx.save();
+  croppedCtx.beginPath();
+  croppedCtx.arc(centerX, centerY, plateRadius, 0, Math.PI * 2);
+  croppedCtx.clip();
+
+  // Copy from original canvas with mask applied
   croppedCtx.drawImage(canvas, 0, 0);
+  croppedCtx.restore();
 
   return croppedCanvas.toDataURL('image/jpeg', 0.92);
 }
