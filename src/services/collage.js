@@ -108,7 +108,20 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(100);
 
-  return canvas.toDataURL('image/jpeg', 0.92);
+  // Crop to bottom edge of plate (like in reference)
+  const plateRadius = PLATE_SIZE / 2;
+  const bottomEdge = Math.ceil(centerY + plateRadius);
+
+  // Create cropped canvas
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = OUTPUT_SIZE;
+  croppedCanvas.height = bottomEdge;
+  const croppedCtx = croppedCanvas.getContext('2d');
+
+  // Copy from original canvas
+  croppedCtx.drawImage(canvas, 0, 0);
+
+  return croppedCanvas.toDataURL('image/jpeg', 0.92);
 }
 
 /**
