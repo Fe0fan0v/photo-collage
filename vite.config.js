@@ -14,7 +14,8 @@ export default defineConfig({
     https: hasSSL ? {
       key: fs.readFileSync(keyPath),
       cert: fs.readFileSync(certPath)
-    } : false
+    } : false,
+    allowedHosts: ['collage.heliad.ru', 'localhost']
   },
   preview: {
     host: '0.0.0.0',
