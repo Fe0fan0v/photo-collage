@@ -29,10 +29,10 @@ async function fetchImageAsDataUrl(url) {
 }
 
 // Output dimensions
-const OUTPUT_SIZE = 900;   // Reduced for smaller final image
-const PLATE_SIZE = 850;    // Proportional reduction
-const FACE_WIDTH = 800;    // Large area to reach plate edge (~94% of plate)
-const FACE_HEIGHT = 800;   // Face scaling controlled by targetEyeDistance
+const OUTPUT_SIZE = 1100;  // Larger canvas for smaller plate ratio (matches reference)
+const PLATE_SIZE = 900;    // Plate is ~82% of canvas (was 94%)
+const FACE_WIDTH = 900;    // Full plate size - clipped by PNG alpha mask
+const FACE_HEIGHT = 900;   // Face scaling controlled by targetEyeDistance
 
 /**
  * Create the final collage
@@ -241,14 +241,14 @@ function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY,
   const face2Info = getFacePixelCoords(faceImg2, face2);
 
   // Use inter-eye distance for scaling
-  // Target eye distance is ~25% of oval width - face size matches reference
-  const targetEyeDistance = radiusX * 2 * 0.25;
+  // Target eye distance is ~24% of oval width - face size matches reference
+  const targetEyeDistance = radiusX * 2 * 0.24;
 
   const scale1 = targetEyeDistance / face1Info.eyeDistance;
   const scale2 = targetEyeDistance / face2Info.eyeDistance;
 
-  // Target eye position: eyes should be at ~42% from top (chin reaches plate edge)
-  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.42);
+  // Target eye position: eyes should be at ~46% from top (chin reaches plate edge)
+  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.46);
 
   // Draw face 1 (left half) - aligned by eyes
   drawAlignedFaceByEyes(ctx, faceImg1, face1Info, scale1, targetEyeY, centerX, centerY, radiusX, radiusY, 'left');
