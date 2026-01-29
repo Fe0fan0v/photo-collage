@@ -110,8 +110,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   // Crop to bottom edge of plate with circular mask (like in reference)
   const plateRadius = PLATE_SIZE / 2;
-  // Add margin to match visual plate edge (includes white background)
-  const cropRadius = plateRadius + 33;
+  // Add small margin to match visual plate edge
+  const cropRadius = plateRadius + 15;
   const bottomEdge = Math.round(centerY + cropRadius);
 
   // Create cropped canvas
