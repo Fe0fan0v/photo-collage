@@ -5,7 +5,7 @@
  */
 
 import { createElement, captureVideoFrame, blobToBase64, loadImage } from '../utils/helpers.js';
-import { processFace } from '../services/background-removal.js';
+import { processFace, preloadModel } from '../services/background-removal.js';
 import logoUrl from '../assets/logo.png';
 
 export class CameraScreen {
@@ -107,6 +107,12 @@ export class CameraScreen {
   }
 
   async mount() {
+    // Check API availability
+    const apiAvailable = await preloadModel();
+    if (!apiAvailable) {
+      this.showError('⚠️ Backend сервер не отвечает. Обработка фото будет недоступна.');
+    }
+
     try {
       await this.startCamera();
     } catch (error) {

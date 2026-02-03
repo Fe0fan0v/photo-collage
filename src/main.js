@@ -36,7 +36,7 @@ class App {
    * Initialize the app
    */
   init() {
-    this.navigateTo('welcome');
+    this.navigateTo('camera');
   }
 
   /**
