@@ -76,6 +76,6 @@ export class SuccessScreen {
 
   handleTryAgain() {
     this.app.reset();
-    this.app.navigateTo('welcome');
+    this.app.navigateTo('camera');
   }
 }
