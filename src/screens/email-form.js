@@ -6,6 +6,7 @@
 import { createElement, isValidEmail } from '../utils/helpers.js';
 import { sendCollageEmail } from '../services/emailjs.js';
 import { saveEmailToSheets } from '../services/google-sheets.js';
+import logoUrl from '../assets/logo.png';
 
 export class EmailFormScreen {
   constructor(app) {
@@ -20,6 +21,19 @@ export class EmailFormScreen {
   render() {
     const screen = createElement('div', { className: 'screen' });
 
+    // Logo header
+    const header = createElement('div', { className: 'logo-header' });
+    const logo = createElement('img', {
+      className: 'logo-image',
+      src: logoUrl,
+      alt: 'SELETTI × DELIGHT'
+    });
+    header.appendChild(logo);
+    screen.appendChild(header);
+
+    // Content with padding
+    const content = createElement('div', { className: 'screen-content-padded' });
+
     // Collage preview
     const preview = createElement('div', { className: 'collage-preview' });
     const collageDataUrl = this.app.getCollage();
@@ -31,16 +45,12 @@ export class EmailFormScreen {
       });
       preview.appendChild(img);
     }
-    screen.appendChild(preview);
-
-    // Title
-    const title = createElement('h2', { className: 'text-center' }, 'Ваш портрет готов!');
-    screen.appendChild(title);
+    content.appendChild(preview);
 
     const description = createElement('p', { className: 'text-center' },
       'Введите email, чтобы получить изображение'
     );
-    screen.appendChild(description);
+    content.appendChild(description);
 
     // Form
     const form = createElement('div', { className: 'form-group' });
@@ -59,7 +69,7 @@ export class EmailFormScreen {
     this.errorText = createElement('div', { className: 'form-error hidden' });
     form.appendChild(this.errorText);
 
-    screen.appendChild(form);
+    content.appendChild(form);
 
     // Consent checkbox
     const checkboxGroup = createElement('label', { className: 'checkbox-group mb-20' });
@@ -73,7 +83,7 @@ export class EmailFormScreen {
       'Я согласен на обработку персональных данных и получение письма с фотографией'
     );
     checkboxGroup.appendChild(checkboxLabel);
-    screen.appendChild(checkboxGroup);
+    content.appendChild(checkboxGroup);
 
     // Submit button
     const buttonContainer = createElement('div', { className: 'mt-auto text-center' });
@@ -83,7 +93,7 @@ export class EmailFormScreen {
     }, 'Получить фото');
 
     buttonContainer.appendChild(this.submitButton);
-    screen.appendChild(buttonContainer);
+    content.appendChild(buttonContainer);
 
     // Add download link as backup
     const downloadContainer = createElement('div', {
@@ -94,11 +104,13 @@ export class EmailFormScreen {
     const downloadLink = createElement('a', {
       href: collageDataUrl,
       download: 'portrait-plate.jpg',
-      style: { color: 'var(--text-muted)', fontSize: '0.9rem' }
+      style: { color: 'var(--primary-color)', fontSize: '0.9rem' }
     }, 'Или скачать напрямую');
 
     downloadContainer.appendChild(downloadLink);
-    screen.appendChild(downloadContainer);
+    content.appendChild(downloadContainer);
+
+    screen.appendChild(content);
 
     return screen;
   }

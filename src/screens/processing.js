@@ -5,6 +5,7 @@
 
 import { createElement } from '../utils/helpers.js';
 import { createCollage } from '../services/collage.js';
+import logoUrl from '../assets/logo.png';
 
 export class ProcessingScreen {
   constructor(app) {
@@ -16,15 +17,25 @@ export class ProcessingScreen {
   render() {
     const screen = createElement('div', { className: 'screen' });
 
+    // Logo header
+    const header = createElement('div', { className: 'logo-header' });
+    const logo = createElement('img', {
+      className: 'logo-image',
+      src: logoUrl,
+      alt: 'SELETTI × DELIGHT'
+    });
+    header.appendChild(logo);
+    screen.appendChild(header);
+
     const container = createElement('div', { className: 'processing-container' });
 
     // Spinner
     const spinner = createElement('div', { className: 'spinner' });
     container.appendChild(spinner);
 
-    // Title
-    const title = createElement('h2', {}, 'Создаём ваш портрет...');
-    container.appendChild(title);
+    // Status title
+    const statusTitle = createElement('h2', {}, 'Создаём ваш портрет...');
+    container.appendChild(statusTitle);
 
     // Status text
     this.statusText = createElement('p', {}, 'Подготовка...');

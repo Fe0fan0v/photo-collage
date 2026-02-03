@@ -5,6 +5,7 @@
 
 import { createElement } from '../utils/helpers.js';
 import { preloadModel } from '../services/background-removal.js';
+import logoUrl from '../assets/logo.png';
 
 export class WelcomeScreen {
   constructor(app) {
@@ -15,29 +16,27 @@ export class WelcomeScreen {
   render() {
     const screen = createElement('div', { className: 'screen' });
 
+    // Logo header
+    const header = createElement('div', { className: 'logo-header' });
+    const logo = createElement('img', {
+      className: 'logo-image',
+      src: logoUrl,
+      alt: 'SELETTI × DELIGHT'
+    });
+    header.appendChild(logo);
+    screen.appendChild(header);
+
+    // Content wrapper with padding
+    const contentWrapper = createElement('div', { className: 'screen-content-padded' });
+
     // Backend warning (hidden by default)
     this.warningElement = createElement('div', {
       className: 'error-message hidden',
       style: { marginBottom: '16px' }
     });
-    screen.appendChild(this.warningElement);
+    contentWrapper.appendChild(this.warningElement);
 
     const content = createElement('div', { className: 'welcome-content' });
-
-    // Icon
-    const icon = createElement('div', { className: 'welcome-icon' });
-    icon.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <circle cx="12" cy="10" r="3"/>
-        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
-      </svg>
-    `;
-    content.appendChild(icon);
-
-    // Title
-    const title = createElement('h1', {}, 'Портрет на тарелке');
-    content.appendChild(title);
 
     // Description
     const description = createElement('p', {},
@@ -65,7 +64,7 @@ export class WelcomeScreen {
     });
 
     content.appendChild(steps);
-    screen.appendChild(content);
+    contentWrapper.appendChild(content);
 
     // Start button
     const buttonContainer = createElement('div', { className: 'mt-auto text-center' });
@@ -75,7 +74,9 @@ export class WelcomeScreen {
     }, 'Начать');
 
     buttonContainer.appendChild(startButton);
-    screen.appendChild(buttonContainer);
+    contentWrapper.appendChild(buttonContainer);
+
+    screen.appendChild(contentWrapper);
 
     return screen;
   }

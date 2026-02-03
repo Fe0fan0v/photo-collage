@@ -4,6 +4,7 @@
  */
 
 import { createElement } from '../utils/helpers.js';
+import logoUrl from '../assets/logo.png';
 
 // Import plate images
 import plate1Url from '../assets/plate-1.jpg';
@@ -27,14 +28,23 @@ export class PlateSelectScreen {
   render() {
     const screen = createElement('div', { className: 'screen' });
 
-    // Title
-    const title = createElement('h1', { className: 'text-center' }, 'Выберите тарелку');
-    screen.appendChild(title);
+    // Logo header
+    const header = createElement('div', { className: 'logo-header' });
+    const logo = createElement('img', {
+      className: 'logo-image',
+      src: logoUrl,
+      alt: 'SELETTI × DELIGHT'
+    });
+    header.appendChild(logo);
+    screen.appendChild(header);
+
+    // Content with padding
+    const contentPadding = createElement('div', { className: 'screen-content-padded' });
 
     const description = createElement('p', { className: 'text-center' },
       'Ваш портрет будет обрамлён выбранным дизайном'
     );
-    screen.appendChild(description);
+    contentPadding.appendChild(description);
 
     // Plates grid
     const platesGrid = createElement('div', { className: 'plates-grid' });
@@ -59,7 +69,7 @@ export class PlateSelectScreen {
       platesGrid.appendChild(card);
     });
 
-    screen.appendChild(platesGrid);
+    contentPadding.appendChild(platesGrid);
 
     // Continue button
     const buttonContainer = createElement('div', { className: 'mt-auto text-center' });
@@ -70,7 +80,9 @@ export class PlateSelectScreen {
     }, 'Продолжить');
 
     buttonContainer.appendChild(this.continueButton);
-    screen.appendChild(buttonContainer);
+    contentPadding.appendChild(buttonContainer);
+
+    screen.appendChild(contentPadding);
 
     return screen;
   }

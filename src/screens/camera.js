@@ -6,6 +6,7 @@
 
 import { createElement, captureVideoFrame, blobToBase64, loadImage } from '../utils/helpers.js';
 import { processFace } from '../services/background-removal.js';
+import logoUrl from '../assets/logo.png';
 
 export class CameraScreen {
   constructor(app) {
@@ -22,14 +23,17 @@ export class CameraScreen {
   }
 
   async render() {
-    const screen = createElement('div', { className: 'screen' });
+    const screen = createElement('div', { className: 'screen screen-camera' });
 
-    // Photo counter
-    const counter = createElement('div', { className: 'photo-counter' });
-    this.instructionText = createElement('span', { className: 'photo-counter-text' });
-    this.updateInstructionText();
-    counter.appendChild(this.instructionText);
-    screen.appendChild(counter);
+    // Logo header
+    const header = createElement('div', { className: 'logo-header' });
+    const logo = createElement('img', {
+      className: 'logo-image',
+      src: logoUrl,
+      alt: 'SELETTI × DELIGHT'
+    });
+    header.appendChild(logo);
+    screen.appendChild(header);
 
     // Camera container
     const cameraContainer = createElement('div', { className: 'camera-container' });
@@ -65,6 +69,13 @@ export class CameraScreen {
 
     cameraContainer.appendChild(overlay);
     screen.appendChild(cameraContainer);
+
+    // Instruction text under camera
+    const instructionContainer = createElement('div', { className: 'camera-instruction' });
+    this.instructionText = createElement('span', { className: 'camera-instruction-text' });
+    this.updateInstructionText();
+    instructionContainer.appendChild(this.instructionText);
+    screen.appendChild(instructionContainer);
 
     // Controls
     const controls = createElement('div', { className: 'camera-controls' });
@@ -187,13 +198,11 @@ export class CameraScreen {
   updateInstructionText() {
     if (this.currentPhotoIndex === 0) {
       this.instructionText.innerHTML = `
-        <span class="photo-counter-highlight">Человек 1:</span>
-        Расположите лицо слева от линии
+        <strong>Первый портрет:</strong> лицо должно находиться слева от линии
       `;
     } else {
       this.instructionText.innerHTML = `
-        <span class="photo-counter-highlight">Человек 2:</span>
-        Расположите лицо справа от линии
+        <strong>Второй портрет:</strong> лицо должно находиться справа от линии
       `;
     }
   }

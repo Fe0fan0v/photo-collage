@@ -4,6 +4,7 @@
  */
 
 import { createElement } from '../utils/helpers.js';
+import logoUrl from '../assets/logo.png';
 
 export class SuccessScreen {
   constructor(app) {
@@ -12,6 +13,19 @@ export class SuccessScreen {
 
   render() {
     const screen = createElement('div', { className: 'screen' });
+
+    // Logo header
+    const header = createElement('div', { className: 'logo-header' });
+    const logo = createElement('img', {
+      className: 'logo-image',
+      src: logoUrl,
+      alt: 'SELETTI × DELIGHT'
+    });
+    header.appendChild(logo);
+    screen.appendChild(header);
+
+    // Content with padding
+    const content = createElement('div', { className: 'screen-content-padded' });
 
     // Collage preview
     const collageDataUrl = this.app.getCollage();
@@ -23,17 +37,13 @@ export class SuccessScreen {
         alt: 'Ваш портрет'
       });
       preview.appendChild(img);
-      screen.appendChild(preview);
+      content.appendChild(preview);
     }
-
-    // Title
-    const title = createElement('h1', { className: 'text-center' }, 'Ваш портрет готов!');
-    screen.appendChild(title);
 
     const description = createElement('p', { className: 'text-center' },
       'Нажмите кнопку ниже, чтобы сохранить изображение'
     );
-    screen.appendChild(description);
+    content.appendChild(description);
 
     // Buttons
     const buttonContainer = createElement('div', {
@@ -58,7 +68,8 @@ export class SuccessScreen {
     }, 'Сделать ещё портрет');
     buttonContainer.appendChild(tryAgainButton);
 
-    screen.appendChild(buttonContainer);
+    content.appendChild(buttonContainer);
+    screen.appendChild(content);
 
     return screen;
   }
