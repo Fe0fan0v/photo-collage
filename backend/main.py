@@ -4,9 +4,10 @@ Simple FastAPI server using rembg for background removal
 With face detection using MediaPipe for accurate eye-based positioning
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from rembg import remove, new_session
 from PIL import Image
 import cv2
@@ -18,6 +19,8 @@ import io
 import base64
 import os
 import urllib.request
+from datetime import datetime
+import secrets
 
 app = FastAPI(title="Background Removal API")
 
@@ -29,6 +32,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Create uploads directory if it doesn't exist
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+# Mount static files for serving uploaded collages
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 # Pre-load models on startup
 session = None
@@ -242,6 +252,48 @@ async def process_face(file: UploadFile = File(...)):
             "face": face_info,
             "width": output_image.width,
             "height": output_image.height
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/save-collage")
+async def save_collage(data: dict = Body(...)):
+    """
+    Save collage image to server and return public URL
+    Expects JSON with 'image' field containing data URL
+    Returns JSON with 'url' field containing public URL
+    """
+    try:
+        image_data = data.get('image', '')
+
+        if not image_data:
+            raise HTTPException(status_code=400, detail="No image data provided")
+
+        # Remove data URL prefix if present
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
+
+        # Decode base64
+        image_bytes = base64.b64decode(image_data)
+
+        # Generate unique filename with timestamp and random suffix
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        random_suffix = secrets.token_hex(4)
+        filename = f"{timestamp}_{random_suffix}.png"
+
+        # Save to uploads directory
+        filepath = os.path.join(UPLOADS_DIR, filename)
+        with open(filepath, 'wb') as f:
+            f.write(image_bytes)
+
+        # Return public URL (will be served through nginx)
+        # Format: https://collage.heliad.ru/uploads/filename.png
+        public_url = f"/uploads/{filename}"
+
+        return JSONResponse({
+            "success": True,
+            "url": public_url,
+            "filename": filename
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
