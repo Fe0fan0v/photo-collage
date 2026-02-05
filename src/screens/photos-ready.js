@@ -25,17 +25,32 @@ export class PhotosReadyScreen {
     header.appendChild(logo);
     screen.appendChild(header);
 
+    // Title banner
+    const titleBanner = createElement('h1', { className: 'photos-ready-banner' });
+    titleBanner.textContent = 'Создай свой Hybrid';
+    screen.appendChild(titleBanner);
+
     // Content container
     const content = createElement('div', { className: 'photos-ready-content' });
 
     // Success message
     const title = createElement('h2', { className: 'photos-ready-title' });
-    title.textContent = 'ПОЧТИ ВСЁ ГОТОВО!';
+    title.textContent = 'Фото готовы!';
     content.appendChild(title);
+
+    // Main continue button
+    const mainButtonContainer = createElement('div', { className: 'photos-ready-main-action' });
+    const mainContinueButton = createElement('button', {
+      className: 'btn btn-primary',
+      onClick: () => this.handleContinue()
+    });
+    mainContinueButton.textContent = 'ДАЛЕЕ';
+    mainButtonContainer.appendChild(mainContinueButton);
+    content.appendChild(mainButtonContainer);
 
     // Instruction text
     const instruction = createElement('p', { className: 'photos-ready-instruction' });
-    instruction.textContent = 'Теперь выберите фон для вашего гибрида';
+    instruction.textContent = 'Если хотите посмотреть или заменить фото, нажмите на превью';
     content.appendChild(instruction);
 
     // Photos grid
@@ -43,8 +58,11 @@ export class PhotosReadyScreen {
 
     const photos = this.app.getPhotos();
 
-    // Photo 1 preview
-    const photo1Container = createElement('div', { className: 'photo-ready-card' });
+    // Photo 1 preview (clickable)
+    const photo1Container = createElement('div', {
+      className: 'photo-ready-card clickable',
+      onClick: () => this.handleRetakePhoto(0)
+    });
     const photo1 = createElement('img', {
       className: 'photo-ready-image',
       src: photos[0] ? URL.createObjectURL(photos[0]) : '',
@@ -53,8 +71,11 @@ export class PhotosReadyScreen {
     photo1Container.appendChild(photo1);
     photosGrid.appendChild(photo1Container);
 
-    // Photo 2 preview
-    const photo2Container = createElement('div', { className: 'photo-ready-card' });
+    // Photo 2 preview (clickable)
+    const photo2Container = createElement('div', {
+      className: 'photo-ready-card clickable',
+      onClick: () => this.handleRetakePhoto(1)
+    });
     const photo2 = createElement('img', {
       className: 'photo-ready-image',
       src: photos[1] ? URL.createObjectURL(photos[1]) : '',
@@ -65,19 +86,24 @@ export class PhotosReadyScreen {
 
     content.appendChild(photosGrid);
 
-    // Continue button
-    const buttonContainer = createElement('div', { className: 'photos-ready-actions' });
-    const continueButton = createElement('button', {
+    // Bottom continue button
+    const bottomButtonContainer = createElement('div', { className: 'photos-ready-bottom-action' });
+    const bottomContinueButton = createElement('button', {
       className: 'btn btn-primary',
       onClick: () => this.handleContinue()
     });
-    continueButton.textContent = 'СОЗДАТЬ ГИБРИД';
-    buttonContainer.appendChild(continueButton);
-    content.appendChild(buttonContainer);
+    bottomContinueButton.textContent = 'ДАЛЕЕ';
+    bottomButtonContainer.appendChild(bottomContinueButton);
+    content.appendChild(bottomButtonContainer);
 
     screen.appendChild(content);
 
     return screen;
+  }
+
+  handleRetakePhoto(photoIndex) {
+    // Return to camera to retake the selected photo
+    this.app.retakePhoto(photoIndex);
   }
 
   handleContinue() {
