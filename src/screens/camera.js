@@ -42,7 +42,7 @@ export class CameraScreen {
 
     // Title banner
     const titleBanner = createElement('h1', { className: 'camera-banner' });
-    titleBanner.textContent = 'СОЗДАЁМ СВОЙ HYBRID';
+    titleBanner.textContent = 'Создай свой Hybrid';
     screen.appendChild(titleBanner);
 
     // Camera container
@@ -81,18 +81,13 @@ export class CameraScreen {
     `;
     overlay.appendChild(this.successCheckmark);
 
-    // Side indicator
-    this.sideIndicator = createElement('div', { className: 'camera-side-indicator' });
-    this.updateSideIndicator();
-    overlay.appendChild(this.sideIndicator);
-
     cameraContainer.appendChild(overlay);
     screen.appendChild(cameraContainer);
 
     // Instruction text under camera
     const instructionContainer = createElement('div', { className: 'camera-instruction' });
     this.instructionText = createElement('span', { className: 'camera-instruction-text' });
-    this.updateInstructionText();
+    this.instructionText.textContent = 'Поместите лицо в овал. Разделение произойдет по желтой линии';
     instructionContainer.appendChild(this.instructionText);
     screen.appendChild(instructionContainer);
 
@@ -101,7 +96,7 @@ export class CameraScreen {
 
     // Photo 1 thumbnail placeholder
     this.photo1Thumbnail = createElement('div', { className: 'photo-placeholder' });
-    this.photo1Thumbnail.innerHTML = '<span style="font-size:10px;color:var(--text-muted)">Фото 1</span>';
+    this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
     controls.appendChild(this.photo1Thumbnail);
 
     // Capture button
@@ -113,7 +108,7 @@ export class CameraScreen {
 
     // Photo 2 thumbnail placeholder
     this.photo2Thumbnail = createElement('div', { className: 'photo-placeholder' });
-    this.photo2Thumbnail.innerHTML = '<span style="font-size:10px;color:var(--text-muted)">Фото 2</span>';
+    this.photo2Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 2<br>Загрузь</span>';
     controls.appendChild(this.photo2Thumbnail);
 
     screen.appendChild(controls);
@@ -161,10 +156,6 @@ export class CameraScreen {
         console.error('Failed to process photo 1 for preview:', error);
       }
     }
-
-    // Update UI for current state
-    this.updateInstructionText();
-    this.updateSideIndicator();
   }
 
   async startCamera() {
@@ -203,6 +194,9 @@ export class CameraScreen {
       // Add photo to app state
       this.app.addPhoto(photoBlob);
 
+      // Show success animation
+      this.showSuccessAnimation();
+
       if (this.currentPhotoIndex === 0) {
         // First photo captured - navigate to photo ready screen
         this.photo1DataUrl = photoDataUrl;
@@ -232,25 +226,24 @@ export class CameraScreen {
     container.appendChild(img);
   }
 
-  updateInstructionText() {
-    if (this.currentPhotoIndex === 0) {
-      this.instructionText.innerHTML = `
-        <strong>Первый портрет:</strong> лицо должно находиться слева от линии
-      `;
-    } else {
-      this.instructionText.innerHTML = `
-        <strong>Второй портрет:</strong> лицо должно находиться справа от линии
-      `;
-    }
-  }
+  showSuccessAnimation() {
+    // Show checkmark animation
+    if (this.successCheckmark) {
+      this.successCheckmark.classList.add('show');
 
-  updateSideIndicator() {
-    if (this.currentPhotoIndex === 0) {
-      this.sideIndicator.className = 'camera-side-indicator left';
-      this.sideIndicator.textContent = 'Левая половина';
-    } else {
-      this.sideIndicator.className = 'camera-side-indicator right';
-      this.sideIndicator.textContent = 'Правая половина';
+      // Hide after animation
+      setTimeout(() => {
+        this.successCheckmark.classList.remove('show');
+      }, 1000);
+    }
+
+    // Add pulsing animation to face guide
+    if (this.faceGuide) {
+      this.faceGuide.classList.add('processing');
+
+      setTimeout(() => {
+        this.faceGuide.classList.remove('processing');
+      }, 1000);
     }
   }
 

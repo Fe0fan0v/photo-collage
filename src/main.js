@@ -3,7 +3,6 @@
  * Creates plate-framed face mashup from two people's photos
  */
 
-import { WelcomeScreen } from './screens/welcome.js';
 import { CameraScreen } from './screens/camera.js';
 import { PhotoReadyScreen } from './screens/photo-ready.js';
 import { PhotosReadyScreen } from './screens/photos-ready.js';
@@ -23,7 +22,6 @@ class App {
     };
 
     this.screens = {
-      welcome: new WelcomeScreen(this),
       camera: new CameraScreen(this),
       photoReady: new PhotoReadyScreen(this),
       photosReady: new PhotosReadyScreen(this),
@@ -40,7 +38,7 @@ class App {
    * Initialize the app
    */
   init() {
-    this.navigateTo('welcome');
+    this.navigateTo('camera');
   }
 
   /**
