@@ -21,20 +21,27 @@ photo-collage/
 ├── index.html
 ├── package.json
 ├── vite.config.js
+├── GOOGLE_SETUP_INSTRUCTIONS.md  # Инструкция по настройке Google API
+├── EMAIL_SETUP_INSTRUCTIONS.md   # Инструкция по настройке EmailJS
 ├── src/
 │   ├── main.js               # Точка входа
 │   ├── styles/
 │   │   └── main.css
 │   ├── screens/
 │   │   ├── camera.js         # Камера + захват фото (стартовый экран)
+│   │   ├── photo-review.js   # Индивидуальный просмотр/переснять фото
 │   │   ├── photos-ready.js   # Подтверждение готовности фото + переснять
 │   │   ├── plate-select.js   # Выбор тарелки (6 вариантов)
 │   │   ├── processing.js     # Обработка + анимированный прелоадер
-│   │   ├── email-form.js     # Ввод email + тип клиента
-│   │   └── success.js        # Результат + действия
+│   │   ├── success.js        # Результат + действия
+│   │   ├── email-form.js     # Ввод 2 email + типы клиентов
+│   │   ├── telegram-promo.js # Подтверждение "Готово!" + Telegram промо
+│   │   └── final.js          # Финальный экран с коллажем + промо + кнопки
 │   ├── services/
 │   │   ├── background-removal.js  # Вызов API бэкенда
-│   │   └── collage.js        # Сборка коллажа на Canvas
+│   │   ├── collage.js        # Сборка коллажа на Canvas
+│   │   ├── emailjs.js        # Отправка email через EmailJS
+│   │   └── google-sheets.js  # (устарело, теперь через backend)
 │   ├── utils/
 │   │   └── helpers.js
 │   └── assets/
@@ -46,10 +53,13 @@ photo-collage/
 │       ├── plate-4.png             # Зелено-красная
 │       ├── plate-5.png             # Черно-синяя с цветами
 │       └── plate-6.png             # Оранжево-черная
-└── backend/
-    ├── main.py               # FastAPI сервер
-    ├── requirements.txt
-    └── venv/                 # Python виртуальное окружение
+├── backend/
+│   ├── main.py               # FastAPI сервер
+│   ├── google_services.py    # Интеграция с Google Drive + Sheets
+│   ├── requirements.txt
+│   ├── .env.example          # Пример переменных окружения
+│   └── venv/                 # Python виртуальное окружение
+└── uploads/                  # Локальные копии коллажей (backup)
 ```
 
 ## Технологии
@@ -66,6 +76,9 @@ photo-collage/
 - rembg (модель u2net) - удаление фона
 - MediaPipe FaceLandmarker - детекция лица и глаз
 - OpenCV (haarcascade) - fallback детекция
+- Google Drive API - сохранение коллажей
+- Google Sheets API - запись данных
+- EmailJS - отправка email (через frontend)
 
 ### Инфраструктура
 - Nginx - reverse proxy + SSL termination
@@ -94,12 +107,33 @@ Base URL: `https://collage.heliad.ru/api`
     "y": 0.15,      // позиция в % от высоты
     "width": 0.5,   // ширина лица в %
     "height": 0.4,  // высота лица в %
-    "found": true
+    "found": true,
+    "eyes": {
+      "left": {"x": 0.3, "y": 0.35},
+      "right": {"x": 0.7, "y": 0.35},
+      "center": {"x": 0.5, "y": 0.35},
+      "distance": 0.4
+    }
   },
   "width": 1280,
   "height": 720
 }
 ```
+
+### POST /api/save-collage
+Сохранение коллажа в Google Drive + запись в Google Sheets
+- Input: JSON с полями `image` (data URL), `email`, `customerType`
+- Output:
+```json
+{
+  "success": true,
+  "url": "https://drive.google.com/uc?export=view&id=...",
+  "collageId": 123,
+  "filename": "collage_20260205_174530_abc123.png",
+  "savedToSheets": true
+}
+```
+- Если Google API не настроен, сохраняет локально в `/uploads/`
 
 ## Логика коллажа (collage.js)
 
@@ -162,34 +196,55 @@ sudo certbot certificates
 ## Что сделано
 
 ### Основной функционал
-- [x] Frontend с экранами (welcome, camera, plate-selection, processing, success)
+- [x] Frontend с 9 экранами (camera, photo-review, photos-ready, plate-select, processing, success, email-form, telegram-promo, final)
 - [x] HTTPS через Let's Encrypt (домен collage.heliad.ru)
 - [x] Python backend с rembg для удаления фона
 - [x] Детекция лица и глаз через MediaPipe FaceLandmarker
-- [x] Овальная маска для лиц (580x720px)
+- [x] Овальная маска для лиц (900x900px)
 - [x] Выравнивание половинок по позиции глаз
 - [x] Масштабирование по межзрачковому расстоянию
+
+### Интеграции
+- [x] Email отправка через EmailJS
+  - Поддержка 2 email адресов
+  - Типы клиентов (Частный покупатель, Дизайнер, Дилер, Поставщик)
+  - Коллаж во вложении
+- [x] Google Drive API
+  - Автоматическая загрузка коллажей
+  - Публичные ссылки на изображения
+  - Service Account аутентификация
+- [x] Google Sheets API
+  - Автоматическая запись данных (ID, дата, email, тип, ссылка)
+  - Генерация последовательных ID
+  - Service Account аутентификация
 
 ### UX улучшения
 - [x] Превью первого фото при съемке второго
   - Обработка фото 1 сразу после захвата
   - Показ правильно позиционированного лица в левой половине овала
   - Второй человек видит точное положение для выравнивания
+- [x] Индивидуальный просмотр/переснятие каждого фото
+  - Экран photo-review для детального просмотра
+  - Кнопка "ПЕРЕСНЯТЬ" с правильной позицией (лево/право)
+  - Выбор фото из галереи
+- [x] Telegram промо после отправки email
+  - Экран подтверждения "Готово!"
+  - Ссылка на Telegram канал
+  - Переход на финальный экран с коллажем
 - [x] Адаптивный дизайн для desktop и mobile
   - Media queries для экранов 768px+
   - Оптимизация размеров камеры и элементов управления
   - Корректное центрирование видео (object-position: center)
 - [x] Улучшенная обработка ошибок
   - Детальные сообщения об ошибках API
-  - Проверка доступности backend на welcome screen
   - Таймауты и fallback для сетевых запросов
   - Индикатор обработки фото
+  - Graceful degradation если Google API не настроен
 
 ## Что нужно доработать
 
-- [ ] Email отправка через EmailJS
-- [ ] Сохранение email в Google Sheets
 - [ ] Возможно: ручная корректировка позиции лица пользователем (если понадобится)
+- [ ] Добавить второй логотип "SELETTI RUSSIAN HYBRID" (когда будет готов)
 
 ## Известные проблемы
 
@@ -197,7 +252,144 @@ sudo certbot certificates
 2. **Обработка времени** - удаление фона через rembg занимает 10-30 секунд на фото
 3. **Первый запуск backend** - скачивание модели MediaPipe (~5MB) при первом запуске
 
-## Последние изменения (2026-02-05)
+## Последние изменения (2026-02-05 вечер)
+
+### Интеграция с Google Drive и Google Sheets
+
+#### Backend: Google Services
+- **Создан модуль `google_services.py`** для работы с Google API
+  - Service Account аутентификация (без Apps Script)
+  - Автоматическая загрузка коллажей в Google Drive
+  - Автоматическая запись данных в Google Sheets
+  - Генерация публичных ссылок на коллажи
+  - Последовательная нумерация коллажей
+
+- **Endpoint `/api/save-collage`**:
+  - Принимает коллаж + email + customerType
+  - Загружает в Google Drive с публичным доступом
+  - Записывает строку в Google Sheets (ID, дата/время, email, тип, URL)
+  - Возвращает публичную ссылку на коллаж
+  - Локальный backup в папку `/uploads/` (на случай если Google API недоступен)
+
+#### Настройка через UI (без кода)
+- **Создан GOOGLE_SETUP_INSTRUCTIONS.md** - пошаговая инструкция:
+  - Создание проекта в Google Cloud Console
+  - Включение Google Drive API и Google Sheets API
+  - Создание Service Account и получение JSON ключа
+  - Настройка Google Таблицы с доступом для Service Account
+  - Создание папки в Google Drive с публичным доступом
+  - Все настройки через веб-интерфейс, без программирования
+
+#### Frontend изменения
+- Упрощена отправка коллажей - один запрос `/api/save-collage` вместо отдельных вызовов
+- Backend сам загружает в Drive и пишет в Sheets
+- Автоматическое сохранение при отправке email
+
+#### Структура Google Sheets
+Таблица автоматически заполняется со столбцами:
+- **ID** - последовательный номер коллажа
+- **Дата и время** - в формате DD.MM.YYYY HH:MM:SS
+- **Email** - первый email из формы
+- **Тип клиента** - Частный покупатель / Дизайнер / Дилер / Поставщик
+- **Ссылка на коллаж** - прямая ссылка на изображение в Google Drive
+
+### Новые экраны workflow
+
+#### Photo Review Screen (индивидуальный просмотр)
+- Детальный просмотр каждого фото отдельно
+- Овал-гид с центральной линией
+- Кнопка "ПЕРЕСНЯТЬ" позиционируется в зависимости от фото:
+  - Фото 1 (левая сторона) → кнопка слева
+  - Фото 2 (правая сторона) → кнопка справа
+- Half-overlay затемнение противоположной стороны
+- Превью-миниатюра кликабельна для выбора из галереи
+- Инструкция: "Поместите лицо в овал. Разделение произойдет по желтой линии"
+
+#### Telegram Promo Screen
+- Показывается после отправки email
+- Большая надпись "Готово!"
+- Текст промо: "Выиграть тарелку из новой коллекции в Telegram"
+- Логотип Telegram (SVG с градиентом)
+- Кликабельная ссылка "Хочу тарелку!" → https://t.me/seletti_russia
+- Ссылка www.seletti.ru внизу
+- Крестик закрытия ведет на Final screen
+
+#### Final Screen (коллаж + промо + кнопки)
+- Прокручиваемый экран со всем контентом
+- Плейсхолдер "SELETTI RUSSIAN HYBRID" (логотип будет позже)
+- Коллаж тарелки
+- Telegram промо блок (тот же что на предыдущем экране)
+- Две желтые кнопки:
+  - "ОТПРАВИТЬ НА ПОЧТУ В ХОРОШЕМ КАЧЕСТВЕ"
+  - "РАСПЕЧАТАТЬ У МЕНЕДЖЕРА СТЕНДА"
+- При клике на кнопки:
+  - Если email уже заполнен → отправляет сразу
+  - Если нет → переходит на email форму
+- Сообщение "Отправлено!" (overlay с анимацией, автозакрытие 2.5 сек)
+
+### Обновленный Email Form
+- Поддержка **двух email** адресов:
+  - Email 1* (обязательный)
+  - Email 2 (опциональный)
+- Два выпадающих списка "Вы" с типами клиентов
+- Отправка на оба email если указаны
+- Крестик закрытия возвращает на success screen
+- Только кнопка "ОТПРАВИТЬ" (убраны лишние элементы)
+
+### Обновленный workflow приложения
+
+```
+Camera (фото 1)
+  → Camera (фото 2)
+  → Photos Ready (подтверждение + клик на превью)
+  → Photo Review (индивидуальный просмотр + переснять)
+  → Photos Ready (возврат)
+  → Plate Selection (выбор из 6 тарелок)
+  → Processing (анимация обработки)
+  → Success (результат + кнопки)
+  → Email Form (ввод 2 email + типы)
+  → Telegram Promo ("Готово!" + промо)
+  → Final (коллаж + промо + кнопки отправки)
+```
+
+При клике на кнопки "ОТПРАВИТЬ" или "РАСПЕЧАТАТЬ" на Final screen:
+- Коллаж загружается в Google Drive
+- Данные записываются в Google Sheets
+- Email отправляется через EmailJS
+- Показывается "Отправлено!"
+
+### Nginx обновления
+- Добавлен location `/uploads/` для отдачи локальных копий коллажей
+- CORS заголовки для images
+- Кэширование uploaded images (7 дней)
+
+### Технические детали
+
+#### Python зависимости
+```
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+```
+
+#### Environment variables
+```bash
+GOOGLE_CREDENTIALS_PATH=credentials.json
+GOOGLE_SHEETS_ID=your_sheets_id
+GOOGLE_DRIVE_FOLDER_ID=your_folder_id
+PUBLIC_URL=https://collage.heliad.ru
+```
+
+#### Безопасность
+- Service Account JSON не коммитится в репозиторий
+- API ключи через environment variables
+- Graceful degradation если Google API не настроен
+- Локальный backup коллажей в папку uploads/
+
+---
+
+## Последние изменения (2026-02-05 утро)
 
 ### Полное обновление UI/UX
 
