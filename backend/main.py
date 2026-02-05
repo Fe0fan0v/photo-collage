@@ -22,6 +22,8 @@ import urllib.request
 from datetime import datetime
 import secrets
 
+from google_services import google_services
+
 app = FastAPI(title="Background Removal API")
 
 # CORS for frontend
@@ -259,12 +261,14 @@ async def process_face(file: UploadFile = File(...)):
 @app.post("/save-collage")
 async def save_collage(data: dict = Body(...)):
     """
-    Save collage image to server and return public URL
-    Expects JSON with 'image' field containing data URL
-    Returns JSON with 'url' field containing public URL
+    Save collage image to Google Drive and Google Sheets
+    Expects JSON with 'image', 'email', 'customerType' fields
+    Returns JSON with 'url' and 'collageId'
     """
     try:
         image_data = data.get('image', '')
+        email = data.get('email', '')
+        customer_type = data.get('customerType', '')
 
         if not image_data:
             raise HTTPException(status_code=400, detail="No image data provided")
@@ -276,25 +280,52 @@ async def save_collage(data: dict = Body(...)):
         # Decode base64
         image_bytes = base64.b64decode(image_data)
 
-        # Generate unique filename with timestamp and random suffix
+        # Generate unique filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         random_suffix = secrets.token_hex(4)
-        filename = f"{timestamp}_{random_suffix}.png"
+        filename = f"collage_{timestamp}_{random_suffix}.png"
 
-        # Save to uploads directory
+        # Save locally as backup
         filepath = os.path.join(UPLOADS_DIR, filename)
         with open(filepath, 'wb') as f:
             f.write(image_bytes)
 
-        # Return public URL (will be served through nginx)
-        # Format: https://collage.heliad.ru/uploads/filename.png
-        public_url = f"/uploads/{filename}"
+        local_url = f"/uploads/{filename}"
+
+        # Try to upload to Google Drive
+        drive_url = None
+        if google_services.is_configured():
+            drive_url = google_services.upload_to_drive(image_bytes, filename)
+
+        # Use Drive URL if available, otherwise use local URL
+        public_url = drive_url if drive_url else f"{os.getenv('PUBLIC_URL', 'https://collage.heliad.ru')}{local_url}"
+
+        # Get next collage ID and save to Google Sheets
+        collage_id = google_services.get_next_collage_id()
+
+        if google_services.is_configured() and email:
+            # Format datetime for Russian locale
+            datetime_str = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
+
+            success = google_services.append_to_sheet({
+                'collage_id': collage_id,
+                'datetime': datetime_str,
+                'email': email,
+                'customer_type': customer_type,
+                'collage_url': public_url
+            })
+
+            if not success:
+                print("Warning: Failed to save to Google Sheets, but file was uploaded")
 
         return JSONResponse({
             "success": True,
             "url": public_url,
-            "filename": filename
+            "collageId": collage_id,
+            "filename": filename,
+            "savedToSheets": google_services.is_configured()
         })
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -5,7 +5,6 @@
 
 import { createElement } from '../utils/helpers.js';
 import { sendCollageEmail } from '../services/emailjs.js';
-import { saveCollageToSheets } from '../services/google-sheets.js';
 import logoUrl from '../assets/logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -154,15 +153,23 @@ export class FinalScreen {
     try {
       const collageDataUrl = this.app.getCollage();
 
-      // Step 1: Upload collage to server to get public URL
+      // Step 1: Upload collage to Google Drive/server and save to Sheets
+      // This single request handles: Drive upload + Sheets append
+      const primaryEmail = emails[0];
       let collageUrl = '';
+      let collageId = Date.now();
+
       try {
         const uploadResponse = await fetch(`${API_URL}/save-collage`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ image: collageDataUrl })
+          body: JSON.stringify({
+            image: collageDataUrl,
+            email: primaryEmail.email,
+            customerType: primaryEmail.customerType
+          })
         });
 
         if (!uploadResponse.ok) {
@@ -171,12 +178,15 @@ export class FinalScreen {
 
         const uploadResult = await uploadResponse.json();
         if (uploadResult.success && uploadResult.url) {
-          // Convert relative URL to absolute
-          collageUrl = `${window.location.origin}${uploadResult.url}`;
+          collageUrl = uploadResult.url;
+          if (uploadResult.collageId) {
+            collageId = uploadResult.collageId;
+          }
+          console.log('Collage saved:', uploadResult);
         }
       } catch (uploadError) {
         console.error('Failed to upload collage:', uploadError);
-        // Continue without URL if upload fails
+        // Continue even if upload fails
       }
 
       // Step 2: Send emails to all saved addresses
@@ -188,31 +198,6 @@ export class FinalScreen {
       });
 
       await Promise.all(emailPromises);
-
-      // Step 3: Save to Google Sheets (only first email)
-      const primaryEmail = emails[0];
-      const collageId = Date.now(); // Use timestamp as ID
-      const datetime = new Date().toLocaleString('ru-RU', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-
-      try {
-        await saveCollageToSheets({
-          collageId,
-          datetime,
-          email: primaryEmail.email,
-          customerType: primaryEmail.customerType,
-          collageUrl: collageUrl || 'N/A'
-        });
-      } catch (sheetsError) {
-        console.error('Failed to save to Google Sheets:', sheetsError);
-        // Continue even if sheets fails
-      }
 
       // Show success message
       this.showSuccessMessage();
