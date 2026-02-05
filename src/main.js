@@ -12,6 +12,7 @@ import { ProcessingScreen } from './screens/processing.js';
 import { EmailFormScreen } from './screens/email-form.js';
 import { SuccessScreen } from './screens/success.js';
 import { TelegramPromoScreen } from './screens/telegram-promo.js';
+import { FinalScreen } from './screens/final.js';
 
 class App {
   constructor() {
@@ -32,7 +33,8 @@ class App {
       processing: new ProcessingScreen(this),
       emailForm: new EmailFormScreen(this),
       success: new SuccessScreen(this),
-      telegramPromo: new TelegramPromoScreen(this)
+      telegramPromo: new TelegramPromoScreen(this),
+      final: new FinalScreen(this)
     };
 
     this.currentScreen = null;
