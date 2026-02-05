@@ -38,6 +38,14 @@ export class EmailFormScreen {
     header.appendChild(logo);
     screen.appendChild(header);
 
+    // Close button (return to success screen)
+    const closeButton = createElement('button', {
+      className: 'close-button',
+      onClick: () => this.handleClose()
+    });
+    closeButton.innerHTML = '×';
+    screen.appendChild(closeButton);
+
     // Content
     const content = createElement('div', { className: 'email-form-content' });
 
@@ -180,6 +188,11 @@ export class EmailFormScreen {
       this.submitButton.disabled = false;
       this.submitButton.textContent = 'ОТПРАВИТЬ';
     }
+  }
+
+  handleClose() {
+    // Return to success screen without sending email
+    this.app.navigateTo('success');
   }
 
   showError(message) {
