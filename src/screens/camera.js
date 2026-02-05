@@ -219,12 +219,16 @@ export class CameraScreen {
       this.showSuccessAnimation();
 
       if (this.currentPhotoIndex === 0) {
-        // First photo captured - navigate to photo ready screen
+        // First photo captured - stay on camera, update for photo 2
         this.photo1DataUrl = photoDataUrl;
         this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
 
-        // Navigate to photo ready screen (single)
-        this.app.navigateTo('photoReady');
+        // Process photo 1 in background for preview
+        this.processPhoto1ForPreview(photoBlob);
+
+        // Move to photo 2
+        this.currentPhotoIndex = 1;
+        this.updateHalfOverlay();
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
@@ -266,6 +270,16 @@ export class CameraScreen {
     }
   }
 
+  async processPhoto1ForPreview(photoBlob) {
+    try {
+      const processed = await processFace(photoBlob);
+      this.photo1FaceData = processed;
+      await this.showPhoto1Preview(processed.image, processed.face);
+    } catch (error) {
+      console.error('Failed to process photo 1 for preview:', error);
+    }
+  }
+
   async handleGallerySelect(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -284,14 +298,7 @@ export class CameraScreen {
       this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
 
       // Process and update preview
-      try {
-        const processed = await processFace(blob);
-        this.photo1FaceData = processed;
-        await this.showPhoto1Preview(processed.image, processed.face);
-      } catch (error) {
-        console.error('Failed to process selected photo:', error);
-        await this.showPhoto1Preview(photoDataUrl, null);
-      }
+      await this.processPhoto1ForPreview(blob);
 
       // Reset file input
       event.target.value = '';
