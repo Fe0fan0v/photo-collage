@@ -11,7 +11,18 @@
       "Bash(git remote add:*)",
       "Bash(git branch:*)",
       "Bash(git push:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(dir:*)",
+      "Bash(python:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "WebFetch(domain:www.figma.com)",
+      "mcp__figma__get_metadata",
+      "mcp__figma__whoami",
+      "mcp__figma__get_screenshot",
+      "Bash(copy:*)",
+      "mcp__figma__get_design_context"
     ]
   }
 }

@@ -212,8 +212,8 @@ export class EmailFormScreen {
       // Save primary email to app state
       this.app.setEmail(email1);
 
-      // Navigate back to success screen and show confirmation
-      this.app.navigateTo('success', { showConfirmation: true });
+      // Navigate to Telegram promo screen
+      this.app.navigateTo('telegramPromo');
     } catch (error) {
       console.error('Submit error:', error);
       this.showError(error.message || 'Произошла ошибка. Попробуйте еще раз.');

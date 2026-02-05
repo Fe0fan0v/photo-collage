@@ -11,6 +11,7 @@ import { PlateSelectScreen } from './screens/plate-select.js';
 import { ProcessingScreen } from './screens/processing.js';
 import { EmailFormScreen } from './screens/email-form.js';
 import { SuccessScreen } from './screens/success.js';
+import { TelegramPromoScreen } from './screens/telegram-promo.js';
 
 class App {
   constructor() {
@@ -30,7 +31,8 @@ class App {
       plateSelect: new PlateSelectScreen(this),
       processing: new ProcessingScreen(this),
       emailForm: new EmailFormScreen(this),
-      success: new SuccessScreen(this)
+      success: new SuccessScreen(this),
+      telegramPromo: new TelegramPromoScreen(this)
     };
 
     this.currentScreen = null;
