@@ -1,6 +1,6 @@
 /**
  * Email Form Screen
- * Shows collage preview and email input form
+ * Collects email and customer type for sending collage
  */
 
 import { createElement, isValidEmail } from '../utils/helpers.js';
@@ -8,18 +8,25 @@ import { sendCollageEmail } from '../services/emailjs.js';
 import { saveEmailToSheets } from '../services/google-sheets.js';
 import logoUrl from '../assets/logo.png';
 
+const CUSTOMER_TYPES = [
+  'Частный покупатель',
+  'Дизайнер',
+  'Дилер',
+  'Поставщик'
+];
+
 export class EmailFormScreen {
   constructor(app) {
     this.app = app;
     this.emailInput = null;
-    this.checkbox = null;
+    this.customerTypeSelect = null;
     this.submitButton = null;
     this.errorText = null;
     this.isSubmitting = false;
   }
 
   render() {
-    const screen = createElement('div', { className: 'screen' });
+    const screen = createElement('div', { className: 'screen screen-email-form' });
 
     // Logo header
     const header = createElement('div', { className: 'logo-header' });
@@ -31,84 +38,86 @@ export class EmailFormScreen {
     header.appendChild(logo);
     screen.appendChild(header);
 
-    // Content with padding
-    const content = createElement('div', { className: 'screen-content-padded' });
+    // Content
+    const content = createElement('div', { className: 'email-form-content' });
 
-    // Collage preview
-    const preview = createElement('div', { className: 'collage-preview' });
-    const collageDataUrl = this.app.getCollage();
+    // Email input group
+    const emailGroup = createElement('div', { className: 'form-group' });
 
-    if (collageDataUrl) {
-      const img = createElement('img', {
-        src: collageDataUrl,
-        alt: 'Ваш коллаж'
-      });
-      preview.appendChild(img);
-    }
-    content.appendChild(preview);
+    const emailLabel = createElement('label', { className: 'form-label' });
+    emailLabel.textContent = 'Email*';
+    emailGroup.appendChild(emailLabel);
 
-    const description = createElement('p', { className: 'text-center' },
-      'Введите email, чтобы получить изображение'
-    );
-    content.appendChild(description);
-
-    // Form
-    const form = createElement('div', { className: 'form-group' });
-
-    // Email input
     this.emailInput = createElement('input', {
       className: 'form-input',
       type: 'email',
-      placeholder: 'example@email.com',
+      placeholder: 'h.apretion@mail.ru',
       autocomplete: 'email',
-      inputmode: 'email'
+      inputmode: 'email',
+      required: 'true'
     });
-    form.appendChild(this.emailInput);
+    emailGroup.appendChild(this.emailInput);
+
+    content.appendChild(emailGroup);
+
+    // Customer type select (optional)
+    const typeGroup = createElement('div', { className: 'form-group' });
+
+    const typeLabel = createElement('label', { className: 'form-label' });
+    typeLabel.textContent = 'Вы';
+    typeGroup.appendChild(typeLabel);
+
+    this.customerTypeSelect = createElement('select', { className: 'form-select' });
+
+    CUSTOMER_TYPES.forEach((type, index) => {
+      const option = createElement('option', { value: type });
+      option.textContent = type;
+      if (index === 0) option.selected = true; // Default to first option
+      this.customerTypeSelect.appendChild(option);
+    });
+
+    typeGroup.appendChild(this.customerTypeSelect);
+    content.appendChild(typeGroup);
 
     // Error text
     this.errorText = createElement('div', { className: 'form-error hidden' });
-    form.appendChild(this.errorText);
-
-    content.appendChild(form);
-
-    // Consent checkbox
-    const checkboxGroup = createElement('label', { className: 'checkbox-group mb-20' });
-    this.checkbox = createElement('input', {
-      className: 'checkbox-input',
-      type: 'checkbox'
-    });
-    checkboxGroup.appendChild(this.checkbox);
-
-    const checkboxLabel = createElement('span', { className: 'checkbox-label' },
-      'Я согласен на обработку персональных данных и получение письма с фотографией'
-    );
-    checkboxGroup.appendChild(checkboxLabel);
-    content.appendChild(checkboxGroup);
+    content.appendChild(this.errorText);
 
     // Submit button
-    const buttonContainer = createElement('div', { className: 'mt-auto text-center' });
+    const submitContainer = createElement('div', { className: 'email-form-actions' });
     this.submitButton = createElement('button', {
       className: 'btn btn-primary',
       onClick: () => this.handleSubmit()
-    }, 'Получить фото');
-
-    buttonContainer.appendChild(this.submitButton);
-    content.appendChild(buttonContainer);
-
-    // Add download link as backup
-    const downloadContainer = createElement('div', {
-      className: 'text-center',
-      style: { marginTop: '16px' }
     });
+    this.submitButton.textContent = 'ОТПРАВИТЬ';
+    submitContainer.appendChild(this.submitButton);
+    content.appendChild(submitContainer);
 
-    const downloadLink = createElement('a', {
-      href: collageDataUrl,
-      download: 'portrait-plate.jpg',
-      style: { color: 'var(--primary-color)', fontSize: '0.9rem' }
-    }, 'Или скачать напрямую');
+    // Inactive buttons (dimmed)
+    const inactiveActions = createElement('div', { className: 'email-form-inactive-actions' });
 
-    downloadContainer.appendChild(downloadLink);
-    content.appendChild(downloadContainer);
+    const emailButtonDimmed = createElement('button', {
+      className: 'btn btn-dimmed',
+      disabled: 'true'
+    });
+    emailButtonDimmed.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
+    inactiveActions.appendChild(emailButtonDimmed);
+
+    const printButtonDimmed = createElement('button', {
+      className: 'btn btn-dimmed',
+      disabled: 'true'
+    });
+    printButtonDimmed.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
+    inactiveActions.appendChild(printButtonDimmed);
+
+    const restartButtonDimmed = createElement('button', {
+      className: 'btn btn-restart btn-dimmed',
+      disabled: 'true'
+    });
+    restartButtonDimmed.textContent = 'НАЧАТЬ СНАЧАЛА';
+    inactiveActions.appendChild(restartButtonDimmed);
+
+    content.appendChild(inactiveActions);
 
     screen.appendChild(content);
 
@@ -142,11 +151,8 @@ export class EmailFormScreen {
       return;
     }
 
-    // Validate consent
-    if (!this.checkbox.checked) {
-      this.showError('Пожалуйста, дайте согласие на обработку данных');
-      return;
-    }
+    // Get customer type (optional)
+    const customerType = this.customerTypeSelect.value;
 
     // Start submission
     this.isSubmitting = true;
@@ -158,21 +164,21 @@ export class EmailFormScreen {
 
       // Send email and save to sheets in parallel
       await Promise.all([
-        sendCollageEmail(email, collageDataUrl),
-        saveEmailToSheets(email)
+        sendCollageEmail(email, collageDataUrl, customerType),
+        saveEmailToSheets(email, { customerType })
       ]);
 
       // Save email to app state
       this.app.setEmail(email);
 
-      // Navigate to success screen
-      this.app.navigateTo('success');
+      // Navigate back to success screen and show confirmation
+      this.app.navigateTo('success', { showConfirmation: true });
     } catch (error) {
       console.error('Submit error:', error);
       this.showError(error.message || 'Произошла ошибка. Попробуйте еще раз.');
       this.isSubmitting = false;
       this.submitButton.disabled = false;
-      this.submitButton.textContent = 'Получить фото';
+      this.submitButton.textContent = 'ОТПРАВИТЬ';
     }
   }
 
@@ -184,5 +190,9 @@ export class EmailFormScreen {
   hideError() {
     this.errorText.classList.add('hidden');
     this.emailInput.classList.remove('error');
+  }
+
+  cleanup() {
+    this.isSubmitting = false;
   }
 }

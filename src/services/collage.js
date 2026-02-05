@@ -16,8 +16,11 @@ import { processMultipleFaces } from './background-removal.js';
 import plate1Url from '../assets/plate-1.png';
 import plate2Url from '../assets/plate-2.png';
 import plate3Url from '../assets/plate-3.png';
+import plate4Url from '../assets/plate-4.png';
+import plate5Url from '../assets/plate-5.png';
+import plate6Url from '../assets/plate-6.png';
 
-const PLATE_URLS = [plate1Url, plate2Url, plate3Url];
+const PLATE_URLS = [plate1Url, plate2Url, plate3Url, plate4Url, plate5Url, plate6Url];
 
 /**
  * Fetch image as data URL

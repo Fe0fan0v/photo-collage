@@ -26,9 +26,10 @@ export function initEmailJS() {
  * Send email with collage
  * @param {string} toEmail - Recipient email address
  * @param {string} collageDataUrl - Collage image as data URL
+ * @param {string} customerType - Customer type (optional)
  * @returns {Promise<void>}
  */
-export async function sendCollageEmail(toEmail, collageDataUrl) {
+export async function sendCollageEmail(toEmail, collageDataUrl, customerType = '') {
   initEmailJS();
 
   // Validate configuration
@@ -42,7 +43,8 @@ export async function sendCollageEmail(toEmail, collageDataUrl) {
   const templateParams = {
     to_email: toEmail,
     reply_to: toEmail,
-    message: 'Ваш коллаж готов! Спасибо за участие в нашей выставке.',
+    message: 'Ваш гибрид готов! Спасибо за участие в нашей выставке.',
+    customer_type: customerType,
     image: collageDataUrl, // Note: EmailJS has size limits for attachments
     date: new Date().toLocaleDateString('ru-RU')
   };

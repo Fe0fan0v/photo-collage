@@ -4,6 +4,7 @@
  */
 
 import { CameraScreen } from './screens/camera.js';
+import { PhotosReadyScreen } from './screens/photos-ready.js';
 import { PlateSelectScreen } from './screens/plate-select.js';
 import { ProcessingScreen } from './screens/processing.js';
 import { EmailFormScreen } from './screens/email-form.js';
@@ -21,6 +22,7 @@ class App {
 
     this.screens = {
       camera: new CameraScreen(this),
+      photosReady: new PhotosReadyScreen(this),
       plateSelect: new PlateSelectScreen(this),
       processing: new ProcessingScreen(this),
       emailForm: new EmailFormScreen(this),
@@ -64,8 +66,8 @@ class App {
     const element = await screen.render(params);
     this.container.appendChild(element);
 
-    // Initialize screen
-    await screen.mount?.();
+    // Initialize screen with params
+    await screen.mount?.(params);
   }
 
   /**
@@ -82,6 +84,17 @@ class App {
    */
   getPhotos() {
     return this.state.photos;
+  }
+
+  /**
+   * Retake a specific photo (go back to camera)
+   * @param {number} photoIndex - Index of photo to retake (0 or 1)
+   */
+  retakePhoto(photoIndex) {
+    // Remove photos from the index onwards
+    this.state.photos = this.state.photos.slice(0, photoIndex);
+    // Navigate to camera with photo index
+    this.navigateTo('camera', { startPhotoIndex: photoIndex });
   }
 
   /**

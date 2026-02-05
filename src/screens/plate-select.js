@@ -1,20 +1,26 @@
 /**
  * Plate Selection Screen
- * Allows user to choose one of 3 plate designs
+ * Allows user to choose one of 6 plate designs
  */
 
 import { createElement } from '../utils/helpers.js';
 import logoUrl from '../assets/logo.png';
 
 // Import plate images
-import plate1Url from '../assets/plate-1.jpg';
-import plate2Url from '../assets/plate-2.jpg';
-import plate3Url from '../assets/plate-3.jpg';
+import plate1Url from '../assets/plate-1.png';
+import plate2Url from '../assets/plate-2.png';
+import plate3Url from '../assets/plate-3.png';
+import plate4Url from '../assets/plate-4.png';
+import plate5Url from '../assets/plate-5.png';
+import plate6Url from '../assets/plate-6.png';
 
 const PLATES = [
-  { id: 0, name: 'Восток и Запад', url: plate1Url },
-  { id: 1, name: 'Цветочный', url: plate2Url },
-  { id: 2, name: 'Классика', url: plate3Url }
+  { id: 0, name: 'Фон 1', url: plate1Url },
+  { id: 1, name: 'Фон 2', url: plate2Url },
+  { id: 2, name: 'Фон 3', url: plate3Url },
+  { id: 3, name: 'Фон 4', url: plate4Url },
+  { id: 4, name: 'Фон 5', url: plate5Url },
+  { id: 5, name: 'Фон 6', url: plate6Url }
 ];
 
 export class PlateSelectScreen {
@@ -22,11 +28,11 @@ export class PlateSelectScreen {
     this.app = app;
     this.selectedPlate = null;
     this.continueButton = null;
-    this.plateCards = [];
+    this.plateItems = [];
   }
 
   render() {
-    const screen = createElement('div', { className: 'screen' });
+    const screen = createElement('div', { className: 'screen screen-plate-select' });
 
     // Logo header
     const header = createElement('div', { className: 'logo-header' });
@@ -38,61 +44,67 @@ export class PlateSelectScreen {
     header.appendChild(logo);
     screen.appendChild(header);
 
-    // Content with padding
-    const contentPadding = createElement('div', { className: 'screen-content-padded' });
+    // Content container
+    const content = createElement('div', { className: 'plate-select-content' });
 
-    const description = createElement('p', { className: 'text-center' },
-      'Ваш портрет будет обрамлён выбранным дизайном'
-    );
-    contentPadding.appendChild(description);
+    // Title
+    const title = createElement('h2', { className: 'plate-select-title' });
+    title.textContent = 'Выберите фон';
+    content.appendChild(title);
 
-    // Plates grid
-    const platesGrid = createElement('div', { className: 'plates-grid' });
+    // Plates list (vertical scrollable)
+    const platesList = createElement('div', { className: 'plates-list' });
 
     PLATES.forEach((plate, index) => {
-      const card = createElement('div', {
-        className: 'plate-card',
+      const item = createElement('div', {
+        className: 'plate-item',
         onClick: () => this.selectPlate(index)
       });
 
-      const img = createElement('img', {
-        className: 'plate-image',
+      // Number badge (alternating left/right)
+      const numberBadge = createElement('div', {
+        className: `plate-number ${index % 2 === 0 ? 'left' : 'right'}`
+      });
+      numberBadge.textContent = index + 1;
+      item.appendChild(numberBadge);
+
+      // Plate image
+      const plateImage = createElement('img', {
+        className: 'plate-item-image',
         src: plate.url,
         alt: plate.name
       });
-      card.appendChild(img);
+      item.appendChild(plateImage);
 
-      const name = createElement('div', { className: 'plate-name' }, plate.name);
-      card.appendChild(name);
-
-      this.plateCards.push(card);
-      platesGrid.appendChild(card);
+      this.plateItems.push(item);
+      platesList.appendChild(item);
     });
 
-    contentPadding.appendChild(platesGrid);
+    content.appendChild(platesList);
 
     // Continue button
-    const buttonContainer = createElement('div', { className: 'mt-auto text-center' });
+    const buttonContainer = createElement('div', { className: 'plate-select-actions' });
     this.continueButton = createElement('button', {
       className: 'btn btn-primary',
       onClick: () => this.handleContinue(),
       disabled: 'true'
-    }, 'Продолжить');
+    });
+    this.continueButton.textContent = 'СОЗДАТЬ HYBRID';
 
     buttonContainer.appendChild(this.continueButton);
-    contentPadding.appendChild(buttonContainer);
+    content.appendChild(buttonContainer);
 
-    screen.appendChild(contentPadding);
+    screen.appendChild(content);
 
     return screen;
   }
 
   selectPlate(index) {
-    // Remove selection from all cards
-    this.plateCards.forEach(card => card.classList.remove('selected'));
+    // Remove selection from all items
+    this.plateItems.forEach(item => item.classList.remove('selected'));
 
-    // Select the clicked card
-    this.plateCards[index].classList.add('selected');
+    // Select the clicked item
+    this.plateItems[index].classList.add('selected');
     this.selectedPlate = index;
 
     // Enable continue button
@@ -108,7 +120,7 @@ export class PlateSelectScreen {
 
   cleanup() {
     this.selectedPlate = null;
-    this.plateCards = [];
+    this.plateItems = [];
   }
 }
 

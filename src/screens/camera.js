@@ -22,7 +22,12 @@ export class CameraScreen {
     this.photo1FaceData = null; // Store face detection data for photo 1
   }
 
-  async render() {
+  async render(params = {}) {
+    // Support starting from a specific photo index (for retakes)
+    if (params.startPhotoIndex !== undefined) {
+      this.currentPhotoIndex = params.startPhotoIndex;
+    }
+
     const screen = createElement('div', { className: 'screen screen-camera' });
 
     // Logo header
@@ -59,8 +64,17 @@ export class CameraScreen {
     overlay.appendChild(centerLine);
 
     // Face oval guide
-    const faceGuide = createElement('div', { className: 'camera-face-guide' });
-    overlay.appendChild(faceGuide);
+    this.faceGuide = createElement('div', { className: 'camera-face-guide' });
+    overlay.appendChild(this.faceGuide);
+
+    // Success checkmark animation (hidden by default)
+    this.successCheckmark = createElement('div', { className: 'camera-success-checkmark' });
+    this.successCheckmark.innerHTML = `
+      <svg viewBox="0 0 52 52">
+        <polyline points="14 27 22 35 38 19" />
+      </svg>
+    `;
+    overlay.appendChild(this.successCheckmark);
 
     // Side indicator
     this.sideIndicator = createElement('div', { className: 'camera-side-indicator' });
@@ -107,6 +121,9 @@ export class CameraScreen {
   }
 
   async mount() {
+    // Restore existing photos if retaking
+    await this.restoreExistingPhotos();
+
     // Check API availability
     const apiAvailable = await preloadModel();
     if (!apiAvailable) {
@@ -119,6 +136,30 @@ export class CameraScreen {
       this.showError('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ и обновите страницу.');
       console.error('Camera access error:', error);
     }
+  }
+
+  async restoreExistingPhotos() {
+    const photos = this.app.getPhotos();
+
+    // Restore photo 1 if it exists
+    if (photos.length > 0 && this.currentPhotoIndex >= 1) {
+      const photo1DataUrl = URL.createObjectURL(photos[0]);
+      this.photo1DataUrl = photo1DataUrl;
+      this.updateThumbnail(this.photo1Thumbnail, photo1DataUrl);
+
+      // Process and show preview if we're taking photo 2
+      try {
+        const processed = await processFace(photos[0]);
+        this.photo1FaceData = processed;
+        await this.showPhoto1Preview(processed.image, processed.face);
+      } catch (error) {
+        console.error('Failed to process photo 1 for preview:', error);
+      }
+    }
+
+    // Update UI for current state
+    this.updateInstructionText();
+    this.updateSideIndicator();
   }
 
   async startCamera() {
@@ -182,8 +223,8 @@ export class CameraScreen {
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
-        // Navigate to plate selection screen
-        this.app.navigateTo('plateSelect');
+        // Navigate to photos ready screen
+        this.app.navigateTo('photosReady');
       }
     } catch (error) {
       this.showError('Ошибка при захвате фото. Попробуйте еще раз.');
@@ -224,13 +265,37 @@ export class CameraScreen {
   }
 
   showProcessingIndicator() {
+    // Show text indicator
     if (this.instructionText) {
       this.instructionText.innerHTML = '<span style="opacity: 0.7">⏳ Обработка...</span>';
+    }
+
+    // Add pulsing animation to face guide
+    if (this.faceGuide) {
+      this.faceGuide.classList.add('processing');
+    }
+
+    // Show checkmark animation
+    if (this.successCheckmark) {
+      this.successCheckmark.classList.add('show');
     }
   }
 
   hideProcessingIndicator() {
+    // Update instruction text
     this.updateInstructionText();
+
+    // Remove pulsing animation from face guide
+    if (this.faceGuide) {
+      this.faceGuide.classList.remove('processing');
+    }
+
+    // Hide checkmark after a delay (keep it visible for a moment)
+    if (this.successCheckmark) {
+      setTimeout(() => {
+        this.successCheckmark.classList.remove('show');
+      }, 500);
+    }
   }
 
   async showPhoto1Preview(imageUrl, faceInfo) {
