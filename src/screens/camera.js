@@ -165,11 +165,10 @@ export class CameraScreen {
       this.photo1DataUrl = photo1DataUrl;
       this.updateThumbnail(this.photo1Thumbnail, photo1DataUrl);
 
-      // Process and show preview if we're taking photo 2
+      // Process photo 1 in background (no preview needed)
       try {
         const processed = await processFace(photos[0]);
         this.photo1FaceData = processed;
-        await this.showPhoto1Preview(processed.image, processed.face);
       } catch (error) {
         console.error('Failed to process photo 1 for preview:', error);
       }
@@ -271,10 +270,11 @@ export class CameraScreen {
   }
 
   async processPhoto1ForPreview(photoBlob) {
+    // Process photo 1 in background (for later use in collage)
+    // No need to show preview in oval - just half overlay is enough
     try {
       const processed = await processFace(photoBlob);
       this.photo1FaceData = processed;
-      await this.showPhoto1Preview(processed.image, processed.face);
     } catch (error) {
       console.error('Failed to process photo 1 for preview:', error);
     }
