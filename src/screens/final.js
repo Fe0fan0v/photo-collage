@@ -4,11 +4,14 @@
  */
 
 import { createElement } from '../utils/helpers.js';
+import { sendCollageEmail } from '../services/emailjs.js';
+import { saveEmailToSheets } from '../services/google-sheets.js';
 import logoUrl from '../assets/logo.png';
 
 export class FinalScreen {
   constructor(app) {
     this.app = app;
+    this.isSending = false;
   }
 
   render() {
@@ -117,14 +120,89 @@ export class FinalScreen {
     return screen;
   }
 
-  handleSendEmail() {
-    // Navigate to email form
-    this.app.navigateTo('emailForm');
+  async handleSendEmail() {
+    await this.sendToEmails();
   }
 
-  handlePrint() {
-    // Also navigate to email form (both buttons lead to same screen)
-    this.app.navigateTo('emailForm');
+  async handlePrint() {
+    await this.sendToEmails();
+  }
+
+  async sendToEmails() {
+    if (this.isSending) return;
+
+    const emails = this.app.getEmails();
+
+    // If no emails saved, go to email form
+    if (!emails || emails.length === 0) {
+      this.app.navigateTo('emailForm');
+      return;
+    }
+
+    // Send to saved emails
+    this.isSending = true;
+
+    // Disable buttons and show loading state
+    const buttons = document.querySelectorAll('.btn-final-action');
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      btn.textContent = 'Отправляем...';
+    });
+
+    try {
+      const collageDataUrl = this.app.getCollage();
+
+      // Send to all saved emails
+      const emailPromises = [];
+      emails.forEach(({ email, customerType }) => {
+        emailPromises.push(
+          sendCollageEmail(email, collageDataUrl, customerType),
+          saveEmailToSheets(email, { customerType })
+        );
+      });
+
+      await Promise.all(emailPromises);
+
+      // Show success message
+      this.showSuccessMessage();
+    } catch (error) {
+      console.error('Send error:', error);
+      alert(error.message || 'Произошла ошибка. Попробуйте еще раз.');
+    } finally {
+      this.isSending = false;
+
+      // Re-enable buttons
+      buttons.forEach((btn, index) => {
+        btn.disabled = false;
+        if (index === 0) {
+          btn.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
+        } else {
+          btn.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
+        }
+      });
+    }
+  }
+
+  showSuccessMessage() {
+    // Create temporary success message
+    const message = createElement('div', { className: 'final-success-message' });
+    message.textContent = 'Отправлено!';
+
+    const scrollContent = document.querySelector('.final-scroll-content');
+    if (scrollContent) {
+      scrollContent.appendChild(message);
+
+      setTimeout(() => {
+        message.classList.add('visible');
+      }, 10);
+
+      setTimeout(() => {
+        message.classList.remove('visible');
+        setTimeout(() => {
+          message.remove();
+        }, 300);
+      }, 2500);
+    }
   }
 
   mount() {
@@ -132,6 +210,6 @@ export class FinalScreen {
   }
 
   cleanup() {
-    // Clean up if needed
+    this.isSending = false;
   }
 }

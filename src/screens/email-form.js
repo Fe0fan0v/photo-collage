@@ -209,8 +209,12 @@ export class EmailFormScreen {
 
       await Promise.all(emailPromises);
 
-      // Save primary email to app state
-      this.app.setEmail(email1);
+      // Save emails to app state
+      const emails = [{ email: email1, customerType: customerType1 }];
+      if (email2) {
+        emails.push({ email: email2, customerType: customerType2 });
+      }
+      this.app.setEmails(emails);
 
       // Navigate to Telegram promo screen
       this.app.navigateTo('telegramPromo');

@@ -21,7 +21,7 @@ class App {
       photos: [], // Array of captured photo Blobs [left, right]
       selectedPlate: null, // Selected plate index (0, 1, 2)
       collageDataUrl: null, // Final collage as data URL
-      email: null
+      emails: [] // Array of {email, customerType} objects
     };
 
     this.screens = {
@@ -138,19 +138,19 @@ class App {
   }
 
   /**
-   * Set user email
-   * @param {string} email
+   * Set user emails with customer types
+   * @param {Array<{email: string, customerType: string}>} emails
    */
-  setEmail(email) {
-    this.state.email = email;
+  setEmails(emails) {
+    this.state.emails = emails;
   }
 
   /**
-   * Get user email
-   * @returns {string}
+   * Get user emails
+   * @returns {Array<{email: string, customerType: string}>}
    */
-  getEmail() {
-    return this.state.email;
+  getEmails() {
+    return this.state.emails;
   }
 
   /**
@@ -161,7 +161,7 @@ class App {
       photos: [],
       selectedPlate: null,
       collageDataUrl: null,
-      email: null
+      emails: []
     };
   }
 }

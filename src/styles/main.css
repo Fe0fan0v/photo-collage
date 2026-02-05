@@ -1940,3 +1940,28 @@ p {
   }
 }
 
+.final-success-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: var(--primary-color);
+  color: var(--text-dark);
+  padding: 24px 48px;
+  border-radius: var(--border-radius);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.6);
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.final-success-message.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
