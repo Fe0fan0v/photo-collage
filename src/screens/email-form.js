@@ -140,21 +140,6 @@ export class EmailFormScreen {
     submitContainer.appendChild(this.submitButton);
     content.appendChild(submitContainer);
 
-    // Text below submit button
-    const standText = createElement('div', { className: 'email-form-stand-text' });
-    standText.textContent = 'У МЕНЕДЖЕРА СТЕНДА';
-    content.appendChild(standText);
-
-    // Restart button
-    const restartContainer = createElement('div', { className: 'email-form-restart' });
-    const restartButton = createElement('button', {
-      className: 'btn btn-primary btn-restart-small',
-      onClick: () => this.handleRestart()
-    });
-    restartButton.textContent = 'НАЧАТЬ СНАЧАЛА';
-    restartContainer.appendChild(restartButton);
-    content.appendChild(restartContainer);
-
     screen.appendChild(content);
 
     return screen;
@@ -241,12 +226,6 @@ export class EmailFormScreen {
   handleClose() {
     // Return to success screen without sending email
     this.app.navigateTo('success');
-  }
-
-  handleRestart() {
-    // Reset and go back to camera
-    this.app.reset();
-    this.app.navigateTo('camera');
   }
 
   showError(message) {
