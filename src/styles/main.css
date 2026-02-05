@@ -1147,6 +1147,18 @@ p {
   pointer-events: none;
 }
 
+/* Center line */
+.photo-review-center-line {
+  position: absolute;
+  top: 5%;
+  bottom: 5%;
+  left: 50%;
+  width: 3px;
+  background: var(--primary-color);
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
 .photo-review-oval {
   position: absolute;
   top: 50%;
@@ -1156,13 +1168,43 @@ p {
   height: 70%;
   border: 5px dashed rgba(255, 255, 255, 0.9);
   border-radius: 50%;
+  z-index: 5;
+}
+
+/* Half overlay for shading */
+.photo-review-half-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 70%;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.photo-review-half-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.photo-review-half-overlay.right::after {
+  right: 0;
+}
+
+.photo-review-half-overlay.left::after {
+  left: 0;
 }
 
 .btn-retake-oval {
   position: absolute;
   top: 12%;
-  left: 50%;
-  transform: translateX(-50%);
   background: var(--primary-color);
   color: var(--text-dark);
   border: none;
@@ -1175,11 +1217,20 @@ p {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
   transition: all var(--transition);
   text-transform: uppercase;
+  z-index: 15;
+}
+
+.btn-retake-oval.right {
+  right: 15%;
+}
+
+.btn-retake-oval.left {
+  left: 15%;
 }
 
 .btn-retake-oval:hover {
   background: var(--primary-dark);
-  transform: translateX(-50%) scale(1.05);
+  transform: scale(1.05);
 }
 
 .photo-review-instruction {

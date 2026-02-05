@@ -53,12 +53,22 @@ export class PhotoReviewScreen {
     // Oval overlay with retake button
     const overlay = createElement('div', { className: 'photo-review-overlay' });
 
+    // Center line
+    const centerLine = createElement('div', { className: 'photo-review-center-line' });
+    overlay.appendChild(centerLine);
+
     const ovalGuide = createElement('div', { className: 'photo-review-oval' });
     overlay.appendChild(ovalGuide);
 
-    // Retake button
+    // Half overlay for shading
+    const halfOverlay = createElement('div', {
+      className: `photo-review-half-overlay ${this.photoIndex === 0 ? 'right' : 'left'}`
+    });
+    overlay.appendChild(halfOverlay);
+
+    // Retake button (positioned left or right based on photo index)
     const retakeButton = createElement('button', {
-      className: 'btn-retake-oval',
+      className: `btn-retake-oval ${this.photoIndex === 0 ? 'right' : 'left'}`,
       onClick: () => this.handleRetake()
     });
     retakeButton.textContent = 'ПЕРЕСНЯТЬ';
