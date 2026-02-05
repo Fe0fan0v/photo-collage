@@ -102,8 +102,8 @@ export class PhotosReadyScreen {
   }
 
   handleRetakePhoto(photoIndex) {
-    // Return to camera to retake the selected photo
-    this.app.retakePhoto(photoIndex);
+    // Navigate to photo review screen for the selected photo
+    this.app.navigateTo('photoReview', { photoIndex });
   }
 
   handleContinue() {

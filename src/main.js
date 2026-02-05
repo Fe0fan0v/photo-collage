@@ -5,6 +5,7 @@
 
 import { CameraScreen } from './screens/camera.js';
 import { PhotoReadyScreen } from './screens/photo-ready.js';
+import { PhotoReviewScreen } from './screens/photo-review.js';
 import { PhotosReadyScreen } from './screens/photos-ready.js';
 import { PlateSelectScreen } from './screens/plate-select.js';
 import { ProcessingScreen } from './screens/processing.js';
@@ -24,6 +25,7 @@ class App {
     this.screens = {
       camera: new CameraScreen(this),
       photoReady: new PhotoReadyScreen(this),
+      photoReview: new PhotoReviewScreen(this),
       photosReady: new PhotosReadyScreen(this),
       plateSelect: new PlateSelectScreen(this),
       processing: new ProcessingScreen(this),
