@@ -80,21 +80,15 @@ export class SuccessScreen {
     printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
     actions.appendChild(printButton);
 
-    // Start over button (small)
+    // Start over button (small, but same style)
     const restartButton = createElement('button', {
-      className: 'btn btn-restart',
+      className: 'btn btn-primary btn-restart-small',
       onClick: () => this.handleRestart()
     });
     restartButton.textContent = 'НАЧАТЬ СНАЧАЛА';
     actions.appendChild(restartButton);
 
     content.appendChild(actions);
-
-    // Footer note
-    const footerNote = createElement('div', { className: 'success-footer-note' });
-    footerNote.innerHTML = 'Возможно<br>контроли<br>"распечатать"<br>не будет';
-    content.appendChild(footerNote);
-
     screen.appendChild(content);
 
     return screen;
