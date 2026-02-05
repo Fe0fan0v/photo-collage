@@ -40,6 +40,11 @@ export class CameraScreen {
     header.appendChild(logo);
     screen.appendChild(header);
 
+    // Title banner
+    const titleBanner = createElement('h1', { className: 'camera-banner' });
+    titleBanner.textContent = 'СОЗДАЁМ СВОЙ HYBRID';
+    screen.appendChild(titleBanner);
+
     // Camera container
     const cameraContainer = createElement('div', { className: 'camera-container' });
 
@@ -199,27 +204,12 @@ export class CameraScreen {
       this.app.addPhoto(photoBlob);
 
       if (this.currentPhotoIndex === 0) {
-        // First photo captured - process it to get face detection data
+        // First photo captured - navigate to photo ready screen
         this.photo1DataUrl = photoDataUrl;
         this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
-        this.updateInstructionText();
-        this.updateSideIndicator();
 
-        // Process photo 1 to remove background, then show preview
-        this.showProcessingIndicator();
-        try {
-          const processed = await processFace(photoBlob);
-          this.photo1FaceData = processed;
-          // Show cropped face (background removed) as preview
-          await this.showPhoto1Preview(processed.image, processed.face);
-        } catch (error) {
-          console.error('Failed to process photo 1:', error);
-          // Fallback: show original photo without cropping
-          await this.showPhoto1Preview(this.photo1DataUrl, null);
-        }
-        this.hideProcessingIndicator();
-
-        this.currentPhotoIndex = 1;
+        // Navigate to photo ready screen (single)
+        this.app.navigateTo('photoReady');
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);

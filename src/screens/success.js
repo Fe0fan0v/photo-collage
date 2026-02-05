@@ -1,6 +1,6 @@
 /**
  * Success/Result Screen
- * Shows the final collage with action buttons
+ * Shows the final collage with send button
  */
 
 import { createElement } from '../utils/helpers.js';
@@ -41,6 +41,11 @@ export class SuccessScreen {
       content.appendChild(preview);
     }
 
+    // Success message
+    const message = createElement('h2', { className: 'success-message' });
+    message.textContent = 'ОТЛИЧНО! ТЕПЕРЬ МЫ ОТПРАВИМ ВАМ ФОТО В ХОРОШЕМ КАЧЕСТВЕ';
+    content.appendChild(message);
+
     // Confirmation message (hidden by default, shown after email sent)
     this.confirmationMessage = createElement('div', { className: 'success-confirmation hidden' });
     this.confirmationMessage.textContent = 'Готово!';
@@ -54,24 +59,8 @@ export class SuccessScreen {
       className: 'btn btn-primary btn-success-main',
       onClick: () => this.handleSendEmail()
     });
-    emailButton.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
+    emailButton.textContent = 'ОТПРАВИТЬ';
     actions.appendChild(emailButton);
-
-    // Print at stand button
-    const printButton = createElement('button', {
-      className: 'btn btn-primary btn-success-main',
-      onClick: () => this.handlePrint()
-    });
-    printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
-    actions.appendChild(printButton);
-
-    // Start over button (small)
-    const restartButton = createElement('button', {
-      className: 'btn btn-restart',
-      onClick: () => this.handleRestart()
-    });
-    restartButton.textContent = 'НАЧАТЬ СНАЧАЛА';
-    actions.appendChild(restartButton);
 
     content.appendChild(actions);
     screen.appendChild(content);
@@ -82,16 +71,6 @@ export class SuccessScreen {
   handleSendEmail() {
     // Navigate to email form
     this.app.navigateTo('emailForm');
-  }
-
-  handlePrint() {
-    // Show confirmation that manager will help with printing
-    alert('Обратитесь к менеджеру стенда для распечатки вашего гибрида!');
-  }
-
-  handleRestart() {
-    this.app.reset();
-    this.app.navigateTo('camera');
   }
 
   mount(params = {}) {

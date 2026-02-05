@@ -30,8 +30,13 @@ export class PhotosReadyScreen {
 
     // Success message
     const title = createElement('h2', { className: 'photos-ready-title' });
-    title.textContent = 'Фото готовы!';
+    title.textContent = 'ПОЧТИ ВСЁ ГОТОВО!';
     content.appendChild(title);
+
+    // Instruction text
+    const instruction = createElement('p', { className: 'photos-ready-instruction' });
+    instruction.textContent = 'Теперь выберите фон для вашего гибрида';
+    content.appendChild(instruction);
 
     // Photos grid
     const photosGrid = createElement('div', { className: 'photos-ready-grid' });
@@ -40,54 +45,22 @@ export class PhotosReadyScreen {
 
     // Photo 1 preview
     const photo1Container = createElement('div', { className: 'photo-ready-card' });
-    const photo1Label = createElement('div', { className: 'photo-ready-label' });
-    photo1Label.textContent = 'Фото 1';
-    photo1Container.appendChild(photo1Label);
-
     const photo1 = createElement('img', {
       className: 'photo-ready-image',
       src: photos[0] ? URL.createObjectURL(photos[0]) : '',
       alt: 'Фото 1'
     });
     photo1Container.appendChild(photo1);
-
-    // Retake button for photo 1
-    const retakeBtn1 = createElement('button', {
-      className: 'btn-retake',
-      onClick: (e) => {
-        e.stopPropagation();
-        this.handleRetakePhoto(0);
-      }
-    });
-    retakeBtn1.textContent = 'ПЕРЕСНЯТЬ';
-    photo1Container.appendChild(retakeBtn1);
-
     photosGrid.appendChild(photo1Container);
 
     // Photo 2 preview
     const photo2Container = createElement('div', { className: 'photo-ready-card' });
-    const photo2Label = createElement('div', { className: 'photo-ready-label' });
-    photo2Label.textContent = 'Фото 2';
-    photo2Container.appendChild(photo2Label);
-
     const photo2 = createElement('img', {
       className: 'photo-ready-image',
       src: photos[1] ? URL.createObjectURL(photos[1]) : '',
       alt: 'Фото 2'
     });
     photo2Container.appendChild(photo2);
-
-    // Retake button for photo 2
-    const retakeBtn2 = createElement('button', {
-      className: 'btn-retake',
-      onClick: (e) => {
-        e.stopPropagation();
-        this.handleRetakePhoto(1);
-      }
-    });
-    retakeBtn2.textContent = 'ПЕРЕСНЯТЬ';
-    photo2Container.appendChild(retakeBtn2);
-
     photosGrid.appendChild(photo2Container);
 
     content.appendChild(photosGrid);
@@ -98,19 +71,13 @@ export class PhotosReadyScreen {
       className: 'btn btn-primary',
       onClick: () => this.handleContinue()
     });
-    continueButton.textContent = 'ДАЛЕЕ';
+    continueButton.textContent = 'СОЗДАТЬ ГИБРИД';
     buttonContainer.appendChild(continueButton);
     content.appendChild(buttonContainer);
 
     screen.appendChild(content);
 
     return screen;
-  }
-
-  handleRetakePhoto(photoIndex) {
-    // Return to camera to retake the selected photo
-    // Set the camera to start from this photo index
-    this.app.retakePhoto(photoIndex);
   }
 
   handleContinue() {
