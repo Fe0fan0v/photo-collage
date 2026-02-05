@@ -100,10 +100,22 @@ export class CameraScreen {
     // Controls
     const controls = createElement('div', { className: 'camera-controls' });
 
-    // Photo 1 thumbnail placeholder
-    this.photo1Thumbnail = createElement('div', { className: 'photo-placeholder' });
+    // Photo 1 thumbnail placeholder (clickable to open gallery)
+    this.photo1Thumbnail = createElement('div', {
+      className: 'photo-placeholder clickable',
+      onClick: () => this.handlePhoto1Click()
+    });
     this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
     controls.appendChild(this.photo1Thumbnail);
+
+    // Hidden file input for gallery selection
+    this.fileInput = createElement('input', {
+      type: 'file',
+      accept: 'image/*',
+      style: { display: 'none' },
+      onChange: (e) => this.handleGallerySelect(e)
+    });
+    screen.appendChild(this.fileInput);
 
     // Capture button
     const captureButton = createElement('button', {
@@ -244,6 +256,48 @@ export class CameraScreen {
     } else {
       // Second photo - shade left half
       this.halfOverlay.className = 'camera-half-overlay left';
+    }
+  }
+
+  handlePhoto1Click() {
+    // Only allow clicking if we're on photo 2 (after photo 1 is taken)
+    if (this.currentPhotoIndex >= 1) {
+      this.fileInput.click();
+    }
+  }
+
+  async handleGallerySelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      // Convert file to blob
+      const blob = new Blob([await file.arrayBuffer()], { type: file.type });
+
+      // Replace photo 1 in app state
+      const photos = this.app.getPhotos();
+      photos[0] = blob;
+
+      // Update thumbnail
+      const photoDataUrl = URL.createObjectURL(blob);
+      this.photo1DataUrl = photoDataUrl;
+      this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
+
+      // Process and update preview
+      try {
+        const processed = await processFace(blob);
+        this.photo1FaceData = processed;
+        await this.showPhoto1Preview(processed.image, processed.face);
+      } catch (error) {
+        console.error('Failed to process selected photo:', error);
+        await this.showPhoto1Preview(photoDataUrl, null);
+      }
+
+      // Reset file input
+      event.target.value = '';
+    } catch (error) {
+      console.error('Error handling gallery selection:', error);
+      this.showError('Не удалось загрузить фото из галереи');
     }
   }
 

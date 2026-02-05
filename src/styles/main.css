@@ -597,6 +597,16 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition);
+}
+
+.photo-placeholder.clickable {
+  cursor: pointer;
+}
+
+.photo-placeholder.clickable:hover {
+  border-color: var(--primary-color);
+  transform: scale(1.05);
 }
 
 .photo-placeholder span {
