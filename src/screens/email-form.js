@@ -1,6 +1,6 @@
 /**
  * Email Form Screen
- * Collects email and customer type for sending collage
+ * Collects emails and customer types for both users
  */
 
 import { createElement, isValidEmail } from '../utils/helpers.js';
@@ -18,8 +18,10 @@ const CUSTOMER_TYPES = [
 export class EmailFormScreen {
   constructor(app) {
     this.app = app;
-    this.emailInput = null;
-    this.customerTypeSelect = null;
+    this.email1Input = null;
+    this.customerType1Select = null;
+    this.email2Input = null;
+    this.customerType2Select = null;
     this.submitButton = null;
     this.errorText = null;
     this.isSubmitting = false;
@@ -28,7 +30,7 @@ export class EmailFormScreen {
   render() {
     const screen = createElement('div', { className: 'screen screen-email-form' });
 
-    // Logo header
+    // Logo header (gray background)
     const header = createElement('div', { className: 'logo-header' });
     const logo = createElement('img', {
       className: 'logo-image',
@@ -49,43 +51,80 @@ export class EmailFormScreen {
     // Content
     const content = createElement('div', { className: 'email-form-content' });
 
-    // Email input group
-    const emailGroup = createElement('div', { className: 'form-group' });
+    // Email 1 input group (required)
+    const email1Group = createElement('div', { className: 'form-group' });
 
-    const emailLabel = createElement('label', { className: 'form-label' });
-    emailLabel.textContent = 'Email*';
-    emailGroup.appendChild(emailLabel);
+    const email1Label = createElement('label', { className: 'form-label' });
+    email1Label.textContent = 'Email 1*';
+    email1Group.appendChild(email1Label);
 
-    this.emailInput = createElement('input', {
+    this.email1Input = createElement('input', {
       className: 'form-input',
       type: 'email',
-      placeholder: 'h.apretion@mail.ru',
+      placeholder: 'ivanpetrov@mail.ru',
       autocomplete: 'email',
       inputmode: 'email',
       required: 'true'
     });
-    emailGroup.appendChild(this.emailInput);
+    email1Group.appendChild(this.email1Input);
 
-    content.appendChild(emailGroup);
+    content.appendChild(email1Group);
 
-    // Customer type select (optional)
-    const typeGroup = createElement('div', { className: 'form-group' });
+    // Customer type 1 select (optional)
+    const type1Group = createElement('div', { className: 'form-group' });
 
-    const typeLabel = createElement('label', { className: 'form-label' });
-    typeLabel.textContent = 'Вы';
-    typeGroup.appendChild(typeLabel);
+    const type1Label = createElement('label', { className: 'form-label' });
+    type1Label.textContent = 'Вы';
+    type1Group.appendChild(type1Label);
 
-    this.customerTypeSelect = createElement('select', { className: 'form-select' });
+    this.customerType1Select = createElement('select', { className: 'form-select' });
 
     CUSTOMER_TYPES.forEach((type, index) => {
       const option = createElement('option', { value: type });
       option.textContent = type;
       if (index === 0) option.selected = true; // Default to first option
-      this.customerTypeSelect.appendChild(option);
+      this.customerType1Select.appendChild(option);
     });
 
-    typeGroup.appendChild(this.customerTypeSelect);
-    content.appendChild(typeGroup);
+    type1Group.appendChild(this.customerType1Select);
+    content.appendChild(type1Group);
+
+    // Email 2 input group (optional)
+    const email2Group = createElement('div', { className: 'form-group' });
+
+    const email2Label = createElement('label', { className: 'form-label' });
+    email2Label.textContent = 'Email 2';
+    email2Group.appendChild(email2Label);
+
+    this.email2Input = createElement('input', {
+      className: 'form-input',
+      type: 'email',
+      placeholder: 'ivanpetrov@mail.ru',
+      autocomplete: 'email',
+      inputmode: 'email'
+    });
+    email2Group.appendChild(this.email2Input);
+
+    content.appendChild(email2Group);
+
+    // Customer type 2 select (optional)
+    const type2Group = createElement('div', { className: 'form-group' });
+
+    const type2Label = createElement('label', { className: 'form-label' });
+    type2Label.textContent = 'Вы';
+    type2Group.appendChild(type2Label);
+
+    this.customerType2Select = createElement('select', { className: 'form-select' });
+
+    CUSTOMER_TYPES.forEach((type, index) => {
+      const option = createElement('option', { value: type });
+      option.textContent = type;
+      if (index === 0) option.selected = true;
+      this.customerType2Select.appendChild(option);
+    });
+
+    type2Group.appendChild(this.customerType2Select);
+    content.appendChild(type2Group);
 
     // Error text
     this.errorText = createElement('div', { className: 'form-error hidden' });
@@ -101,31 +140,20 @@ export class EmailFormScreen {
     submitContainer.appendChild(this.submitButton);
     content.appendChild(submitContainer);
 
-    // Inactive buttons (dimmed)
-    const inactiveActions = createElement('div', { className: 'email-form-inactive-actions' });
+    // Text below submit button
+    const standText = createElement('div', { className: 'email-form-stand-text' });
+    standText.textContent = 'У МЕНЕДЖЕРА СТЕНДА';
+    content.appendChild(standText);
 
-    const emailButtonDimmed = createElement('button', {
-      className: 'btn btn-dimmed',
-      disabled: 'true'
+    // Restart button
+    const restartContainer = createElement('div', { className: 'email-form-restart' });
+    const restartButton = createElement('button', {
+      className: 'btn btn-primary btn-restart-small',
+      onClick: () => this.handleRestart()
     });
-    emailButtonDimmed.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
-    inactiveActions.appendChild(emailButtonDimmed);
-
-    const printButtonDimmed = createElement('button', {
-      className: 'btn btn-dimmed',
-      disabled: 'true'
-    });
-    printButtonDimmed.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
-    inactiveActions.appendChild(printButtonDimmed);
-
-    const restartButtonDimmed = createElement('button', {
-      className: 'btn btn-restart btn-dimmed',
-      disabled: 'true'
-    });
-    restartButtonDimmed.textContent = 'НАЧАТЬ СНАЧАЛА';
-    inactiveActions.appendChild(restartButtonDimmed);
-
-    content.appendChild(inactiveActions);
+    restartButton.textContent = 'НАЧАТЬ СНАЧАЛА';
+    restartContainer.appendChild(restartButton);
+    content.appendChild(restartContainer);
 
     screen.appendChild(content);
 
@@ -135,7 +163,7 @@ export class EmailFormScreen {
   mount() {
     // Focus email input after render
     setTimeout(() => {
-      this.emailInput?.focus();
+      this.email1Input?.focus();
     }, 100);
   }
 
@@ -145,22 +173,33 @@ export class EmailFormScreen {
     // Clear previous errors
     this.hideError();
 
-    // Validate email
-    const email = this.emailInput.value.trim();
-    if (!email) {
-      this.showError('Пожалуйста, введите email');
-      this.emailInput.classList.add('error');
+    // Validate email 1 (required)
+    const email1 = this.email1Input.value.trim();
+    if (!email1) {
+      this.showError('Пожалуйста, введите Email 1');
+      this.email1Input.classList.add('error');
       return;
     }
 
-    if (!isValidEmail(email)) {
-      this.showError('Пожалуйста, введите корректный email');
-      this.emailInput.classList.add('error');
+    if (!isValidEmail(email1)) {
+      this.showError('Пожалуйста, введите корректный Email 1');
+      this.email1Input.classList.add('error');
       return;
     }
 
-    // Get customer type (optional)
-    const customerType = this.customerTypeSelect.value;
+    // Get email 2 (optional)
+    const email2 = this.email2Input.value.trim();
+
+    // Validate email 2 if provided
+    if (email2 && !isValidEmail(email2)) {
+      this.showError('Пожалуйста, введите корректный Email 2');
+      this.email2Input.classList.add('error');
+      return;
+    }
+
+    // Get customer types
+    const customerType1 = this.customerType1Select.value;
+    const customerType2 = this.customerType2Select.value;
 
     // Start submission
     this.isSubmitting = true;
@@ -170,14 +209,23 @@ export class EmailFormScreen {
     try {
       const collageDataUrl = this.app.getCollage();
 
-      // Send email and save to sheets in parallel
-      await Promise.all([
-        sendCollageEmail(email, collageDataUrl, customerType),
-        saveEmailToSheets(email, { customerType })
-      ]);
+      // Send to both emails if provided
+      const emailPromises = [
+        sendCollageEmail(email1, collageDataUrl, customerType1),
+        saveEmailToSheets(email1, { customerType: customerType1 })
+      ];
 
-      // Save email to app state
-      this.app.setEmail(email);
+      if (email2) {
+        emailPromises.push(
+          sendCollageEmail(email2, collageDataUrl, customerType2),
+          saveEmailToSheets(email2, { customerType: customerType2 })
+        );
+      }
+
+      await Promise.all(emailPromises);
+
+      // Save primary email to app state
+      this.app.setEmail(email1);
 
       // Navigate back to success screen and show confirmation
       this.app.navigateTo('success', { showConfirmation: true });
@@ -195,6 +243,12 @@ export class EmailFormScreen {
     this.app.navigateTo('success');
   }
 
+  handleRestart() {
+    // Reset and go back to camera
+    this.app.reset();
+    this.app.navigateTo('camera');
+  }
+
   showError(message) {
     this.errorText.textContent = message;
     this.errorText.classList.remove('hidden');
@@ -202,7 +256,8 @@ export class EmailFormScreen {
 
   hideError() {
     this.errorText.classList.add('hidden');
-    this.emailInput.classList.remove('error');
+    this.email1Input.classList.remove('error');
+    this.email2Input.classList.remove('error');
   }
 
   cleanup() {
