@@ -89,7 +89,7 @@ export class PlateSelectScreen {
       onClick: () => this.handleContinue(),
       disabled: 'true'
     });
-    this.continueButton.textContent = 'ВЫБРАТЬ ФОТКУ';
+    this.continueButton.textContent = 'СОЗДАТЬ HYBRID';
 
     buttonContainer.appendChild(this.continueButton);
     content.appendChild(buttonContainer);
