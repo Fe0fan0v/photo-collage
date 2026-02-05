@@ -709,6 +709,9 @@ p {
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
   align-items: center;
   gap: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: var(--border-radius);
+  margin: 20px;
 }
 
 .success-confirmation {
@@ -949,6 +952,9 @@ p {
   padding-bottom: calc(30px + env(safe-area-inset-bottom));
   align-items: center;
   justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: var(--border-radius);
+  margin: 20px;
 }
 
 .photos-ready-title {
@@ -1075,6 +1081,9 @@ p {
   padding: 20px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
   overflow: hidden;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: var(--border-radius);
+  margin: 20px;
 }
 
 .plate-select-title {
@@ -1217,6 +1226,9 @@ p {
   padding: 30px 20px;
   padding-bottom: calc(30px + env(safe-area-inset-bottom));
   gap: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: var(--border-radius);
+  margin: 20px;
 }
 
 .email-form-actions {
