@@ -26,6 +26,8 @@ export class CameraScreen {
     // Support starting from a specific photo index (for retakes)
     if (params.startPhotoIndex !== undefined) {
       this.currentPhotoIndex = params.startPhotoIndex;
+    } else {
+      this.currentPhotoIndex = 0;
     }
 
     const screen = createElement('div', { className: 'screen screen-camera' });
@@ -71,6 +73,10 @@ export class CameraScreen {
     // Face oval guide
     this.faceGuide = createElement('div', { className: 'camera-face-guide' });
     overlay.appendChild(this.faceGuide);
+
+    // Half overlay for shading (left or right side)
+    this.halfOverlay = createElement('div', { className: 'camera-half-overlay right' });
+    overlay.appendChild(this.halfOverlay);
 
     // Success checkmark animation (hidden by default)
     this.successCheckmark = createElement('div', { className: 'camera-success-checkmark' });
@@ -156,6 +162,9 @@ export class CameraScreen {
         console.error('Failed to process photo 1 for preview:', error);
       }
     }
+
+    // Update half overlay position based on current photo
+    this.updateHalfOverlay();
   }
 
   async startCamera() {
@@ -224,6 +233,18 @@ export class CameraScreen {
       src: dataUrl
     });
     container.appendChild(img);
+  }
+
+  updateHalfOverlay() {
+    if (!this.halfOverlay) return;
+
+    if (this.currentPhotoIndex === 0) {
+      // First photo - shade right half
+      this.halfOverlay.className = 'camera-half-overlay right';
+    } else {
+      // Second photo - shade left half
+      this.halfOverlay.className = 'camera-half-overlay left';
+    }
   }
 
   showSuccessAnimation() {
