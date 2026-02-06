@@ -4,8 +4,7 @@
  */
 
 import { createElement, isValidEmail } from '../utils/helpers.js';
-import { sendCollageEmail } from '../services/emailjs.js';
-import { saveEmailToSheets } from '../services/google-sheets.js';
+import { sendCollageToMultiple } from '../services/emailjs.js';
 import logoUrl from '../assets/logo.png';
 
 const CUSTOMER_TYPES = [
@@ -194,20 +193,14 @@ export class EmailFormScreen {
     try {
       const collageDataUrl = this.app.getCollage();
 
-      // Send to both emails if provided
-      const emailPromises = [
-        sendCollageEmail(email1, collageDataUrl, customerType1),
-        saveEmailToSheets(email1, { customerType: customerType1 })
-      ];
-
+      // Build recipients list
+      const recipients = [{ email: email1, customerType: customerType1 }];
       if (email2) {
-        emailPromises.push(
-          sendCollageEmail(email2, collageDataUrl, customerType2),
-          saveEmailToSheets(email2, { customerType: customerType2 })
-        );
+        recipients.push({ email: email2, customerType: customerType2 });
       }
 
-      await Promise.all(emailPromises);
+      // Send to all recipients in a single request
+      await sendCollageToMultiple(recipients, collageDataUrl);
 
       // Save emails to app state
       const emails = [{ email: email1, customerType: customerType1 }];

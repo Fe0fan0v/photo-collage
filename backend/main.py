@@ -16,6 +16,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import io
+import asyncio
 import base64
 import os
 import urllib.request
@@ -23,6 +24,7 @@ from datetime import datetime
 import secrets
 
 from google_services import google_services
+from email_service import email_service
 
 app = FastAPI(title="Background Removal API")
 
@@ -328,6 +330,46 @@ async def save_collage(data: dict = Body(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/send-email")
+async def send_email(data: dict = Body(...)):
+    """
+    Send collage email via SMTP
+    Expects JSON with 'image' (data URL) and 'recipients' ([{email, customerType}])
+    """
+    try:
+        image_data = data.get('image', '')
+        recipients = data.get('recipients', [])
+
+        if not image_data:
+            return JSONResponse({'success': False, 'message': 'Изображение не предоставлено', 'results': []})
+
+        if not recipients:
+            return JSONResponse({'success': False, 'message': 'Не указаны получатели', 'results': []})
+
+        if not email_service.is_configured():
+            return JSONResponse({'success': False, 'message': 'SMTP не настроен. Обратитесь к администратору.', 'results': []})
+
+        # Remove data URL prefix
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
+
+        image_bytes = base64.b64decode(image_data)
+
+        # Run blocking SMTP in a thread
+        results = await asyncio.to_thread(email_service.send_to_multiple, recipients, image_bytes)
+
+        all_ok = all(r['success'] for r in results)
+
+        return JSONResponse({
+            'success': all_ok,
+            'results': results,
+            'message': 'Все письма отправлены' if all_ok else 'Некоторые письма не удалось отправить'
+        })
+
+    except Exception as e:
+        return JSONResponse({'success': False, 'message': str(e), 'results': []}, status_code=500)
+
 
 if __name__ == "__main__":
     import uvicorn

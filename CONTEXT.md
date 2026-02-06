@@ -40,7 +40,7 @@ photo-collage/
 │   ├── services/
 │   │   ├── background-removal.js  # Вызов API бэкенда
 │   │   ├── collage.js        # Сборка коллажа на Canvas
-│   │   ├── emailjs.js        # Отправка email через EmailJS
+│   │   ├── emailjs.js        # Отправка email через backend SMTP
 │   │   └── google-sheets.js  # (устарело, теперь через backend)
 │   ├── utils/
 │   │   └── helpers.js
@@ -56,6 +56,7 @@ photo-collage/
 ├── backend/
 │   ├── main.py               # FastAPI сервер
 │   ├── google_services.py    # Интеграция с Google Drive + Sheets
+│   ├── email_service.py      # SMTP email сервис
 │   ├── requirements.txt
 │   ├── .env.example          # Пример переменных окружения
 │   └── venv/                 # Python виртуальное окружение
@@ -78,7 +79,7 @@ photo-collage/
 - OpenCV (haarcascade) - fallback детекция
 - Google Drive API - сохранение коллажей
 - Google Sheets API - запись данных
-- EmailJS - отправка email (через frontend)
+- SMTP (smtplib) - отправка email через backend
 
 ### Инфраструктура
 - Nginx - reverse proxy + SSL termination
@@ -134,6 +135,23 @@ Base URL: `https://collage.heliad.ru/api`
 }
 ```
 - Если Google API не настроен, сохраняет локально в `/uploads/`
+
+### POST /api/send-email
+Отправка email с коллажем через SMTP
+- Input: JSON с полями `image` (data URL), `recipients` ([{email, customerType}])
+- Output:
+```json
+{
+  "success": true,
+  "results": [
+    {"email": "user@mail.ru", "success": true, "message": "Письмо отправлено"}
+  ],
+  "message": "Все письма отправлены"
+}
+```
+- Если SMTP не настроен, возвращает `{"success": false, "message": "SMTP не настроен..."}`
+- Поддержка нескольких получателей в одном запросе
+- PNG-вложение `seletti-hybrid.png`
 
 ## Логика коллажа (collage.js)
 
@@ -205,10 +223,12 @@ sudo certbot certificates
 - [x] Масштабирование по межзрачковому расстоянию
 
 ### Интеграции
-- [x] Email отправка через EmailJS
-  - Поддержка 2 email адресов
+- [x] Email отправка через SMTP (backend)
+  - Перенесено с EmailJS (frontend) на SMTP (backend)
+  - Поддержка 2 email адресов в одном запросе
   - Типы клиентов (Частный покупатель, Дизайнер, Дилер, Поставщик)
-  - Коллаж во вложении
+  - PNG-вложение `seletti-hybrid.png`
+  - Конфигурация через env-переменные (SMTP_HOST, SMTP_PORT и т.д.)
 - [x] Google Drive API
   - Автоматическая загрузка коллажей
   - Публичные ссылки на изображения
@@ -251,6 +271,52 @@ sudo certbot certificates
 1. **Детекция лица** - MediaPipe надёжнее haarcascade, но может не найти лицо при плохом освещении (есть fallback)
 2. **Обработка времени** - удаление фона через rembg занимает 10-30 секунд на фото
 3. **Первый запуск backend** - скачивание модели MediaPipe (~5MB) при первом запуске
+
+## Последние изменения (2026-02-06)
+
+### Перенос отправки email с EmailJS (frontend) на SMTP (backend)
+
+#### Зачем
+- Убрана зависимость от стороннего сервиса EmailJS
+- Email отправляется напрямую через SMTP с сервера
+- Адрес отправителя: `hello@seletti.ru`
+
+#### Backend
+- **Создан `backend/email_service.py`** — SMTP-сервис:
+  - Класс `EmailService` (по аналогии с `GoogleServices`)
+  - Конфигурация через env: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_FROM_NAME`, `SMTP_USE_TLS`
+  - `is_configured()` — проверка наличия обязательных настроек
+  - `send_email()` — отправка одного письма с PNG-вложением
+  - `send_to_multiple()` — отправка нескольким получателям
+  - HTML-тело на русском, вложение `seletti-hybrid.png`
+  - Только встроённые модули Python (`smtplib`, `email.mime.*`)
+
+- **Новый endpoint `POST /send-email`** в `main.py`:
+  - Принимает `{image, recipients: [{email, customerType}]}`
+  - Декодирует base64, отправляет через SMTP
+  - Обёрнут в `asyncio.to_thread()` (не блокирует event loop)
+  - Возвращает `{success, results: [{email, success, message}], message}`
+
+#### Frontend
+- **`src/services/emailjs.js`** — полностью переписан:
+  - `sendCollageEmail()` / `sendCollageToMultiple()` → `fetch('/api/send-email')`
+  - Удалён импорт `@emailjs/browser`
+  - `isEmailJSConfigured()` → всегда `true` (обратная совместимость)
+
+- **`src/screens/email-form.js`** — упрощён:
+  - Удалён импорт `saveEmailToSheets` (был no-op)
+  - Один запрос `sendCollageToMultiple()` вместо отдельных вызовов
+
+#### Конфигурация
+- **`package.json`** — удалена зависимость `@emailjs/browser`
+- **`backend/.env.example`** — добавлены SMTP-переменные
+- Новых pip-зависимостей нет (только встроённые модули Python)
+
+#### Статус
+- SMTP_PASSWORD пока не предоставлен — сервис корректно возвращает ошибку "SMTP не настроен"
+- Когда пароль будет получен — достаточно добавить в `.env` на сервере и перезапустить backend
+
+---
 
 ## Последние изменения (2026-02-05 вечер)
 
@@ -355,7 +421,7 @@ Camera (фото 1)
 При клике на кнопки "ОТПРАВИТЬ" или "РАСПЕЧАТАТЬ" на Final screen:
 - Коллаж загружается в Google Drive
 - Данные записываются в Google Sheets
-- Email отправляется через EmailJS
+- Email отправляется через backend SMTP (`/api/send-email`)
 - Показывается "Отправлено!"
 
 ### Nginx обновления
@@ -379,6 +445,15 @@ GOOGLE_CREDENTIALS_PATH=credentials.json
 GOOGLE_SHEETS_ID=your_sheets_id
 GOOGLE_DRIVE_FOLDER_ID=your_folder_id
 PUBLIC_URL=https://collage.heliad.ru
+
+# SMTP
+SMTP_HOST=smtp.yandex.ru
+SMTP_PORT=587
+SMTP_USER=hello@seletti.ru
+SMTP_PASSWORD=
+SMTP_FROM=hello@seletti.ru
+SMTP_FROM_NAME=Seletti Russia
+SMTP_USE_TLS=true
 ```
 
 #### Безопасность
