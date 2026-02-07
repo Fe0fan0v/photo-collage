@@ -34,23 +34,24 @@ async function fetchImageAsDataUrl(url) {
   return blobToBase64(blob);
 }
 
-// Output dimensions
-const OUTPUT_SIZE = 1100;  // Larger canvas for smaller plate ratio (matches reference)
-const PLATE_SIZE = 900;    // Plate is ~82% of canvas (was 94%)
-const FACE_WIDTH = 900;    // Full plate size - clipped by PNG alpha mask
-const FACE_HEIGHT = 900;   // Face scaling controlled by targetEyeDistance
+// Output dimensions (portrait to match backage.png aspect ratio 1240x1748 = ~0.71)
+const OUTPUT_WIDTH = 1100;   // Canvas width
+const OUTPUT_HEIGHT = 1550;  // Canvas height (taller to show full backage.png with logos)
+const PLATE_SIZE = 900;      // Plate is ~82% of canvas width
+const FACE_WIDTH = 900;      // Full plate size - clipped by PNG alpha mask
+const FACE_HEIGHT = 900;     // Face scaling controlled by targetEyeDistance
 
 /**
  * Create the final collage
  */
 export async function createCollage(photo1, photo2, plateIndex, onProgress = () => {}) {
   const canvas = document.createElement('canvas');
-  canvas.width = OUTPUT_SIZE;
-  canvas.height = OUTPUT_SIZE;
+  canvas.width = OUTPUT_WIDTH;
+  canvas.height = OUTPUT_HEIGHT;
   const ctx = canvas.getContext('2d');
 
-  const centerX = OUTPUT_SIZE / 2;
-  const centerY = OUTPUT_SIZE / 2;
+  const centerX = OUTPUT_WIDTH / 2;
+  const centerY = OUTPUT_HEIGHT / 2;
 
   // Step 1: Process faces - remove backgrounds and detect face positions (0-60%)
   onProgress(5);
@@ -79,7 +80,7 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   onProgress(70);
 
   // Step 4: Draw background frame (scaled to canvas size)
-  drawBackgroundFrame(ctx, OUTPUT_SIZE, bgFrameImg);
+  drawBackgroundFrame(ctx, OUTPUT_WIDTH, OUTPUT_HEIGHT, bgFrameImg);
 
   // Step 5: Draw plate PNG (with transparency)
   drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
@@ -92,8 +93,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   // Create temporary canvas for faces
   const facesCanvas = document.createElement('canvas');
-  facesCanvas.width = OUTPUT_SIZE;
-  facesCanvas.height = OUTPUT_SIZE;
+  facesCanvas.width = OUTPUT_WIDTH;
+  facesCanvas.height = OUTPUT_HEIGHT;
   const facesCtx = facesCanvas.getContext('2d');
 
   // Draw both face halves on temporary canvas
@@ -137,9 +138,9 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 /**
  * Draw background frame (backage.png scaled to canvas size)
  */
-function drawBackgroundFrame(ctx, size, frameImg) {
-  // Scale frame to fit canvas size
-  ctx.drawImage(frameImg, 0, 0, size, size);
+function drawBackgroundFrame(ctx, width, height, frameImg) {
+  // Scale frame to fit canvas dimensions
+  ctx.drawImage(frameImg, 0, 0, width, height);
 }
 
 /**
