@@ -20,6 +20,9 @@ import plate4Url from '../assets/plate-4.png';
 import plate5Url from '../assets/plate-5.png';
 import plate6Url from '../assets/plate-6.png';
 
+// Import background pattern
+import backgroundPatternUrl from '../assets/background-pattern.png';
+
 const PLATE_URLS = [plate1Url, plate2Url, plate3Url, plate4Url, plate5Url, plate6Url];
 
 /**
@@ -59,9 +62,13 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(60);
 
-  // Step 2: Load plate image
-  const plateDataUrl = await fetchImageAsDataUrl(PLATE_URLS[plateIndex]);
+  // Step 2: Load plate image and background pattern
+  const [plateDataUrl, bgPatternDataUrl] = await Promise.all([
+    fetchImageAsDataUrl(PLATE_URLS[plateIndex]),
+    fetchImageAsDataUrl(backgroundPatternUrl)
+  ]);
   const plateImg = await loadImage(plateDataUrl);
+  const bgPatternImg = await loadImage(bgPatternDataUrl);
 
   // Step 3: Load processed face images
   const [faceImg1, faceImg2] = await Promise.all([
@@ -72,7 +79,7 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   onProgress(70);
 
   // Step 4: Draw background pattern
-  drawBackgroundPattern(ctx, OUTPUT_SIZE);
+  drawBackgroundPattern(ctx, OUTPUT_SIZE, bgPatternImg);
 
   // Step 5: Draw plate PNG (with transparency)
   drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
@@ -128,25 +135,18 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 }
 
 /**
- * Draw zigzag background pattern
+ * Draw background pattern using actual background image (tiled)
  */
-function drawBackgroundPattern(ctx, size) {
-  ctx.fillStyle = '#ffffff';
+function drawBackgroundPattern(ctx, size, patternImg) {
+  // Fill with black background first
+  ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, size, size);
 
-  ctx.fillStyle = '#000000';
-  const step = 20;
-  for (let y = 0; y < size; y += step) {
-    for (let x = 0; x < size; x += step) {
-      const offset = (Math.floor(y / step) % 2) * (step / 2);
-      ctx.beginPath();
-      ctx.moveTo(x + offset, y);
-      ctx.lineTo(x + offset + step / 2, y + step / 2);
-      ctx.lineTo(x + offset, y + step);
-      ctx.lineTo(x + offset - step / 2, y + step / 2);
-      ctx.closePath();
-      ctx.fill();
-    }
+  // Create pattern from image (200px repeating)
+  const pattern = ctx.createPattern(patternImg, 'repeat');
+  if (pattern) {
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, size, size);
   }
 }
 
