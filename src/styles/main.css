@@ -747,7 +747,6 @@ p {
 .screen-success {
   max-width: 100%;
   padding: 0;
-  background: #000000;
 }
 
 .success-content {
@@ -758,7 +757,6 @@ p {
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
   align-items: center;
   gap: 15px;
-  background: #000000;
 }
 
 .success-second-logo {
@@ -1785,7 +1783,6 @@ p {
    =========================== */
 
 .screen-final {
-  background: var(--background-dark);
   overflow-y: auto;
 }
 
