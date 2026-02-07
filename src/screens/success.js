@@ -5,7 +5,6 @@
 
 import { createElement } from '../utils/helpers.js';
 import logoUrl from '../assets/logo.png';
-import russianHybridLogoUrl from '../assets/russian-hybrid-logo.png';
 
 export class SuccessScreen {
   constructor(app) {
@@ -29,17 +28,7 @@ export class SuccessScreen {
     // Content
     const content = createElement('div', { className: 'success-content' });
 
-    // Russian Hybrid logo
-    const secondLogo = createElement('div', { className: 'success-second-logo' });
-    const russianHybridLogo = createElement('img', {
-      className: 'russian-hybrid-logo-image',
-      src: russianHybridLogoUrl,
-      alt: 'SELETTI RUSSIAN HYBRID'
-    });
-    secondLogo.appendChild(russianHybridLogo);
-    content.appendChild(secondLogo);
-
-    // Collage preview
+    // Collage preview (logo is already in collage background)
     const collageDataUrl = this.app.getCollage();
 
     if (collageDataUrl) {

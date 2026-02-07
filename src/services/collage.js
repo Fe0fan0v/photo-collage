@@ -20,8 +20,8 @@ import plate4Url from '../assets/plate-4.png';
 import plate5Url from '../assets/plate-5.png';
 import plate6Url from '../assets/plate-6.png';
 
-// Import background pattern
-import backgroundPatternUrl from '../assets/background-pattern.png';
+// Import background frame
+import backgroundFrameUrl from '../assets/backage.png';
 
 const PLATE_URLS = [plate1Url, plate2Url, plate3Url, plate4Url, plate5Url, plate6Url];
 
@@ -62,13 +62,13 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(60);
 
-  // Step 2: Load plate image and background pattern
-  const [plateDataUrl, bgPatternDataUrl] = await Promise.all([
+  // Step 2: Load plate image and background frame
+  const [plateDataUrl, bgFrameDataUrl] = await Promise.all([
     fetchImageAsDataUrl(PLATE_URLS[plateIndex]),
-    fetchImageAsDataUrl(backgroundPatternUrl)
+    fetchImageAsDataUrl(backgroundFrameUrl)
   ]);
   const plateImg = await loadImage(plateDataUrl);
-  const bgPatternImg = await loadImage(bgPatternDataUrl);
+  const bgFrameImg = await loadImage(bgFrameDataUrl);
 
   // Step 3: Load processed face images
   const [faceImg1, faceImg2] = await Promise.all([
@@ -78,8 +78,8 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(70);
 
-  // Step 4: Draw background pattern
-  drawBackgroundPattern(ctx, OUTPUT_SIZE, bgPatternImg);
+  // Step 4: Draw background frame (scaled to canvas size)
+  drawBackgroundFrame(ctx, OUTPUT_SIZE, bgFrameImg);
 
   // Step 5: Draw plate PNG (with transparency)
   drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
@@ -135,19 +135,11 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 }
 
 /**
- * Draw background pattern using actual background image (tiled)
+ * Draw background frame (backage.png scaled to canvas size)
  */
-function drawBackgroundPattern(ctx, size, patternImg) {
-  // Fill with black background first
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, size, size);
-
-  // Create pattern from image (200px repeating)
-  const pattern = ctx.createPattern(patternImg, 'repeat');
-  if (pattern) {
-    ctx.fillStyle = pattern;
-    ctx.fillRect(0, 0, size, size);
-  }
+function drawBackgroundFrame(ctx, size, frameImg) {
+  // Scale frame to fit canvas size
+  ctx.drawImage(frameImg, 0, 0, size, size);
 }
 
 /**

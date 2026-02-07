@@ -6,7 +6,6 @@
 import { createElement } from '../utils/helpers.js';
 import { sendCollageEmail } from '../services/emailjs.js';
 import logoUrl from '../assets/logo.png';
-import russianHybridLogoUrl from '../assets/russian-hybrid-logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -32,17 +31,7 @@ export class FinalScreen {
     // Scrollable content
     const scrollContent = createElement('div', { className: 'final-scroll-content' });
 
-    // Russian Hybrid logo
-    const secondLogo = createElement('div', { className: 'final-second-logo' });
-    const russianHybridLogo = createElement('img', {
-      className: 'russian-hybrid-logo-image',
-      src: russianHybridLogoUrl,
-      alt: 'SELETTI RUSSIAN HYBRID'
-    });
-    secondLogo.appendChild(russianHybridLogo);
-    scrollContent.appendChild(secondLogo);
-
-    // Collage preview
+    // Collage preview (logo is already in collage background)
     const collageDataUrl = this.app.getCollage();
 
     if (collageDataUrl) {
