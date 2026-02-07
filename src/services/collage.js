@@ -37,9 +37,9 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions (portrait to match backage.png aspect ratio 1240x1748 = ~0.71)
 const OUTPUT_WIDTH = 1100;   // Canvas width
 const OUTPUT_HEIGHT = 1550;  // Canvas height (taller to show full backage.png with logos)
-const PLATE_SIZE = 870;      // Plate matches transparent circle in backage.png (78.8% of width)
-const FACE_WIDTH = 870;      // Full plate size - clipped by PNG alpha mask
-const FACE_HEIGHT = 870;     // Face scaling controlled by targetEyeDistance
+const PLATE_SIZE = 868;      // Plate matches transparent circle in backage.png (978px @ 1240w = 78.9% → 868px @ 1100w)
+const FACE_WIDTH = 868;      // Full plate size - clipped by PNG alpha mask
+const FACE_HEIGHT = 868;     // Face scaling controlled by targetEyeDistance
 
 /**
  * Create the final collage
@@ -51,7 +51,9 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   const ctx = canvas.getContext('2d');
 
   const centerX = OUTPUT_WIDTH / 2;
-  const centerY = OUTPUT_HEIGHT / 2;
+  // Circle center in backage.png is at 56.4% height (y=985.5px of 1748px)
+  // Scaled to canvas: 1550 * 0.564 = 874px
+  const centerY = OUTPUT_HEIGHT * 0.564;
 
   // Step 1: Process faces - remove backgrounds and detect face positions (0-60%)
   onProgress(5);
