@@ -6,21 +6,21 @@
 import { createElement } from '../utils/helpers.js';
 import logoUrl from '../assets/logo.png';
 
-// Import plate images
-import plate1Url from '../assets/plate-1.png';
-import plate2Url from '../assets/plate-2.png';
-import plate3Url from '../assets/plate-3.png';
-import plate4Url from '../assets/plate-4.png';
-import plate5Url from '../assets/plate-5.png';
-import plate6Url from '../assets/plate-6.png';
+// Import plate thumbnail images (small, fast loading)
+import plate1ThumbUrl from '../assets/plate-1-thumb.png';
+import plate2ThumbUrl from '../assets/plate-2-thumb.png';
+import plate3ThumbUrl from '../assets/plate-3-thumb.png';
+import plate4ThumbUrl from '../assets/plate-4-thumb.png';
+import plate5ThumbUrl from '../assets/plate-5-thumb.png';
+import plate6ThumbUrl from '../assets/plate-6-thumb.png';
 
 const PLATES = [
-  { id: 0, name: 'Фон 1', url: plate1Url },
-  { id: 1, name: 'Фон 2', url: plate2Url },
-  { id: 2, name: 'Фон 3', url: plate3Url },
-  { id: 3, name: 'Фон 4', url: plate4Url },
-  { id: 4, name: 'Фон 5', url: plate5Url },
-  { id: 5, name: 'Фон 6', url: plate6Url }
+  { id: 0, name: 'Фон 1', url: plate1ThumbUrl },
+  { id: 1, name: 'Фон 2', url: plate2ThumbUrl },
+  { id: 2, name: 'Фон 3', url: plate3ThumbUrl },
+  { id: 3, name: 'Фон 4', url: plate4ThumbUrl },
+  { id: 4, name: 'Фон 5', url: plate5ThumbUrl },
+  { id: 5, name: 'Фон 6', url: plate6ThumbUrl }
 ];
 
 export class PlateSelectScreen {
