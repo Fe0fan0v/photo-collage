@@ -37,9 +37,9 @@ async function fetchImageAsDataUrl(url) {
 // Output dimensions (portrait to match backage.png aspect ratio 1240x1748 = ~0.71)
 const OUTPUT_WIDTH = 1100;   // Canvas width
 const OUTPUT_HEIGHT = 1550;  // Canvas height (taller to show full backage.png with logos)
-const PLATE_SIZE = 900;      // Plate is ~82% of canvas width
-const FACE_WIDTH = 900;      // Full plate size - clipped by PNG alpha mask
-const FACE_HEIGHT = 900;     // Face scaling controlled by targetEyeDistance
+const PLATE_SIZE = 870;      // Plate matches transparent circle in backage.png (78.8% of width)
+const FACE_WIDTH = 870;      // Full plate size - clipped by PNG alpha mask
+const FACE_HEIGHT = 870;     // Face scaling controlled by targetEyeDistance
 
 /**
  * Create the final collage
@@ -79,15 +79,12 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
 
   onProgress(70);
 
-  // Step 4: Draw background frame (scaled to canvas size)
-  drawBackgroundFrame(ctx, OUTPUT_WIDTH, OUTPUT_HEIGHT, bgFrameImg);
-
-  // Step 5: Draw plate PNG (with transparency)
+  // Step 4: Draw plate PNG (with transparency) - FIRST (behind background frame)
   drawPlate(ctx, plateImg, centerX, centerY, PLATE_SIZE);
 
   onProgress(75);
 
-  // Step 6: Draw faces clipped to plate shape using PNG alpha mask
+  // Step 5: Draw faces clipped to plate shape using PNG alpha mask
   const radiusX = FACE_WIDTH / 2;
   const radiusY = FACE_HEIGHT / 2;
 
@@ -118,6 +115,9 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   ctx.drawImage(facesCanvas, 0, 0);
 
   onProgress(80);
+
+  // Step 6: Draw background frame ON TOP (plate visible through transparent circle)
+  drawBackgroundFrame(ctx, OUTPUT_WIDTH, OUTPUT_HEIGHT, bgFrameImg);
 
   onProgress(90);
 
