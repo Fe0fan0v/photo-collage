@@ -6,6 +6,7 @@
 import { createElement } from '../utils/helpers.js';
 import { sendCollageEmail } from '../services/emailjs.js';
 import logoUrl from '../assets/logo.png';
+import russianHybridLogoUrl from '../assets/russian-hybrid-logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -31,9 +32,14 @@ export class FinalScreen {
     // Scrollable content
     const scrollContent = createElement('div', { className: 'final-scroll-content' });
 
-    // Second logo placeholder (Russian Hybrid - will be added later)
+    // Russian Hybrid logo
     const secondLogo = createElement('div', { className: 'final-second-logo' });
-    secondLogo.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 0.9rem; color: rgba(255,255,255,0.5);">SELETTI RUSSIAN HYBRID<br>(логотип будет позже)</div>';
+    const russianHybridLogo = createElement('img', {
+      className: 'russian-hybrid-logo-image',
+      src: russianHybridLogoUrl,
+      alt: 'SELETTI RUSSIAN HYBRID'
+    });
+    secondLogo.appendChild(russianHybridLogo);
     scrollContent.appendChild(secondLogo);
 
     // Collage preview

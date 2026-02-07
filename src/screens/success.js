@@ -5,6 +5,7 @@
 
 import { createElement } from '../utils/helpers.js';
 import logoUrl from '../assets/logo.png';
+import russianHybridLogoUrl from '../assets/russian-hybrid-logo.png';
 
 export class SuccessScreen {
   constructor(app) {
@@ -28,9 +29,14 @@ export class SuccessScreen {
     // Content
     const content = createElement('div', { className: 'success-content' });
 
-    // Second logo placeholder (Russian Hybrid - will be added later)
+    // Russian Hybrid logo
     const secondLogo = createElement('div', { className: 'success-second-logo' });
-    secondLogo.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 0.9rem; color: rgba(255,255,255,0.5);">SELETTI RUSSIAN HYBRID<br>(логотип будет позже)</div>';
+    const russianHybridLogo = createElement('img', {
+      className: 'russian-hybrid-logo-image',
+      src: russianHybridLogoUrl,
+      alt: 'SELETTI RUSSIAN HYBRID'
+    });
+    secondLogo.appendChild(russianHybridLogo);
     content.appendChild(secondLogo);
 
     // Collage preview

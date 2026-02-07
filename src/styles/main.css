@@ -767,6 +767,12 @@ p {
   margin-bottom: 10px;
 }
 
+.russian-hybrid-logo-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .success-website-link {
   color: var(--text-color);
   text-decoration: none;
@@ -1797,6 +1803,12 @@ p {
   width: 100%;
   max-width: 350px;
   margin-top: 10px;
+}
+
+.final-second-logo .russian-hybrid-logo-image {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .final-collage-preview {
