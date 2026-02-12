@@ -22,7 +22,18 @@
       "mcp__figma__whoami",
       "mcp__figma__get_screenshot",
       "Bash(copy:*)",
-      "mcp__figma__get_design_context"
+      "mcp__figma__get_design_context",
+      "Bash(git pull:*)",
+      "Bash(where:*)",
+      "Bash(winget search:*)",
+      "Bash(gcloud:*)",
+      "Bash(\"C:\\\\Program Files \\(x86\\)\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\" --version)",
+      "Bash(\"C:\\\\Program Files \\(x86\\)\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\" auth login)",
+      "Bash(setup_google_cloud.bat)",
+      "Bash(cmd.exe:*)",
+      "Bash(pip install:*)",
+      "Bash(nslookup:*)",
+      "Bash(git status:*)"
     ]
   }
 }

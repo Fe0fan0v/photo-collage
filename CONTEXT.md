@@ -7,11 +7,12 @@
 
 | Сервис | URL |
 |--------|-----|
-| Сайт | https://collage.heliad.ru |
-| API | https://collage.heliad.ru/api |
+| Сайт | https://seletti-hybrid.de-light.ru |
+| API | https://seletti-hybrid.de-light.ru/api |
 | SSH | admin@158.160.141.83 |
 
 **IP сервера**: 158.160.141.83
+**Домен**: seletti-hybrid.de-light.ru (ранее collage.heliad.ru)
 **Репозиторий**: https://github.com/Fe0fan0v/photo-collage.git
 
 ## Структура проекта
@@ -96,7 +97,7 @@ photo-collage/
 
 ## API Endpoints
 
-Base URL: `https://collage.heliad.ru/api`
+Base URL: `https://seletti-hybrid.de-light.ru/api`
 
 ### GET /api/health
 Проверка состояния сервера
@@ -217,7 +218,7 @@ sudo certbot certificates
 
 ### Nginx конфигурация
 
-Файл: `/etc/nginx/sites-enabled/collage.heliad.ru`
+Файл: `/etc/nginx/sites-enabled/seletti-hybrid.de-light.ru`
 
 - `/` -> proxy_pass http://127.0.0.1:3007 (frontend)
 - `/api/` -> proxy_pass http://127.0.0.1:3008/ (backend)
@@ -226,7 +227,7 @@ sudo certbot certificates
 
 ### Основной функционал
 - [x] Frontend с 9 экранами (camera, photo-review, photos-ready, plate-select, processing, success, email-form, telegram-promo, final)
-- [x] HTTPS через Let's Encrypt (домен collage.heliad.ru)
+- [x] HTTPS через Let's Encrypt (домен seletti-hybrid.de-light.ru)
 - [x] Python backend с rembg для удаления фона
 - [x] Детекция лица и глаз через MediaPipe FaceLandmarker
 - [x] Овальная маска для лиц (900x900px)
@@ -284,7 +285,64 @@ sudo certbot certificates
 
 ---
 
-## Последние изменения (2026-02-07 вечер)
+## Последние изменения (2026-02-12)
+
+### Смена домена на seletti-hybrid.de-light.ru
+
+#### Что сделано
+- **Домен**: `collage.heliad.ru` → `seletti-hybrid.de-light.ru`
+- **SSL**: новый сертификат Let's Encrypt (действует до 13.05.2026)
+- **Nginx**: новый конфиг `/etc/nginx/sites-enabled/seletti-hybrid.de-light.ru`
+- **Vite**: добавлен `seletti-hybrid.de-light.ru` в `allowedHosts`
+- **Backend `.env`**: обновлён `PUBLIC_URL`
+- **Старый конфиг** `collage.heliad.ru` удалён
+- **Тайтл страницы**: `Фото-коллаж` → `Seletti Hybrid`
+
+### Настройка Google Cloud + Drive + Sheets
+
+#### Google Cloud проект
+- **Проект**: `seletti-collage` (Google Cloud Console)
+- **Service Account**: `collage-service@seletti-collage.iam.gserviceaccount.com`
+- **Включённые API**: Google Sheets API, Google Drive API, IAM API
+- **Ключ**: `backend/credentials.json` (не коммитится в репозиторий)
+
+#### Google Sheets
+- **Таблица**: "Seletti Collages Database"
+- **GOOGLE_SHEETS_ID**: `1dxStIaJgkqgea1IhC4IM6_Ih6Jj-v6YCC2GRDkt-3VU`
+- **Лист**: "Коллажи"
+- **Столбцы**: ID | Дата и время | Email | Тип клиента | Ссылка на коллаж
+- **Форматирование**: жирные заголовки, ширина столбцов, закреплённая первая строка
+- **Валидация**: выпадающий список типов клиентов (Частный покупатель, Дизайнер, Дилер, Поставщик)
+- **Доступ**: Service Account (редактор), аккаунт ok.lena.kazah@gmail.com (владелец)
+
+#### Google Drive
+- **Папка**: "Seletti Collages"
+- **GOOGLE_DRIVE_FOLDER_ID**: `1hUav6hoIpVr4fR4b6xIpKQ3O4hKl3Axw`
+- **Доступ**: Service Account (редактор), публичный доступ по ссылке (читатель)
+- Коллажи загружаются как PNG с публичными ссылками
+
+#### Скрипты автоматизации (локальные)
+- **`backend/setup_google_cloud.bat`** — создание проекта, API, Service Account через gcloud CLI
+- **`backend/create_google_sheet.py`** — создание таблицы с форматированием через API
+
+#### Backend .env (на сервере)
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=Ok.lena.kazah@gmail.com
+SMTP_PASSWORD=<app-password>
+SMTP_FROM=Ok.lena.kazah@gmail.com
+SMTP_FROM_NAME=Seletti Russia
+SMTP_USE_TLS=true
+GOOGLE_CREDENTIALS_PATH=credentials.json
+GOOGLE_SHEETS_ID=1dxStIaJgkqgea1IhC4IM6_Ih6Jj-v6YCC2GRDkt-3VU
+GOOGLE_DRIVE_FOLDER_ID=1hUav6hoIpVr4fR4b6xIpKQ3O4hKl3Axw
+PUBLIC_URL=https://seletti-hybrid.de-light.ru
+```
+
+---
+
+## Изменения (2026-02-07 вечер)
 
 ### Новый фон коллажа с логотипом RUSSIAN HYBRID
 
@@ -527,14 +585,14 @@ google-api-python-client
 GOOGLE_CREDENTIALS_PATH=credentials.json
 GOOGLE_SHEETS_ID=your_sheets_id
 GOOGLE_DRIVE_FOLDER_ID=your_folder_id
-PUBLIC_URL=https://collage.heliad.ru
+PUBLIC_URL=https://seletti-hybrid.de-light.ru
 
 # SMTP
-SMTP_HOST=smtp.yandex.ru
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=hello@seletti.ru
-SMTP_PASSWORD=
-SMTP_FROM=hello@seletti.ru
+SMTP_USER=Ok.lena.kazah@gmail.com
+SMTP_PASSWORD=<app-password>
+SMTP_FROM=Ok.lena.kazah@gmail.com
 SMTP_FROM_NAME=Seletti Russia
 SMTP_USE_TLS=true
 ```
