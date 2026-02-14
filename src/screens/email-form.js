@@ -153,6 +153,13 @@ export class EmailFormScreen {
     }, 100);
   }
 
+  _fetchWithTimeout(url, options, timeoutMs = 60000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
+
   async handleSubmit() {
     if (this.isSubmitting) return;
 
@@ -201,34 +208,49 @@ export class EmailFormScreen {
         recipients.push({ email: email2, customerType: customerType2 });
       }
 
-      // Step 1: Save collage to Google Drive/Sheets
-      let collageInfo = null;
-      try {
-        const uploadResponse = await fetch(`${API_URL}/save-collage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            image: collageDataUrl,
-            email: email1,
-            customerType: customerType1
-          })
-        });
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          if (uploadResult.success) {
-            collageInfo = {
-              collageId: uploadResult.collageId,
-              url: uploadResult.url,
+      // Run save-collage and send-email in parallel (save-collage is optional)
+      const savePromise = this._fetchWithTimeout(`${API_URL}/save-collage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: collageDataUrl,
+          email: email1,
+          customerType: customerType1
+        })
+      }, 90000).then(async (res) => {
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            return {
+              collageId: result.collageId,
+              url: result.url,
               datetime: new Date().toLocaleString('ru-RU')
             };
           }
         }
-      } catch (uploadError) {
-        console.error('Failed to save collage:', uploadError);
-      }
+        return null;
+      }).catch((err) => {
+        console.error('Failed to save collage:', err);
+        return null;
+      });
 
-      // Step 2: Send to all recipients + manager notification
-      await sendCollageToMultiple(recipients, collageDataUrl, collageInfo);
+      const emailBody = JSON.stringify({
+        image: collageDataUrl,
+        recipients
+      });
+
+      const emailPromise = this._fetchWithTimeout(`${API_URL}/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: emailBody
+      }, 90000);
+
+      const [collageInfo, emailResponse] = await Promise.all([savePromise, emailPromise]);
+
+      const emailData = await emailResponse.json();
+      if (!emailData.success) {
+        throw new Error(emailData.message || 'Не удалось отправить письма.');
+      }
 
       // Save emails to app state
       const emails = [{ email: email1, customerType: customerType1 }];
@@ -241,7 +263,10 @@ export class EmailFormScreen {
       this.app.navigateTo('telegramPromo');
     } catch (error) {
       console.error('Submit error:', error);
-      this.showError(error.message || 'Произошла ошибка. Попробуйте еще раз.');
+      const msg = error.name === 'AbortError'
+        ? 'Превышено время ожидания. Проверьте интернет и попробуйте ещё раз.'
+        : (error.message || 'Произошла ошибка. Попробуйте еще раз.');
+      this.showError(msg);
       this.isSubmitting = false;
       this.submitButton.disabled = false;
       this.submitButton.textContent = 'ОТПРАВИТЬ';

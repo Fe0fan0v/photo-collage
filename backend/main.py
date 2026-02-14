@@ -360,8 +360,10 @@ async def send_email(data: dict = Body(...)):
         # Run blocking SMTP in a thread
         results = await asyncio.to_thread(email_service.send_to_multiple, recipients, image_bytes)
 
-        # Send manager notification with collage info
-        await asyncio.to_thread(email_service.send_manager_notification, image_bytes, recipients, collage_info)
+        # Send manager notification in background (don't block the response)
+        asyncio.create_task(
+            asyncio.to_thread(email_service.send_manager_notification, image_bytes, recipients, collage_info)
+        )
 
         all_ok = all(r['success'] for r in results)
 

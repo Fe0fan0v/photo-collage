@@ -4,7 +4,7 @@
  */
 
 import { createElement } from '../utils/helpers.js';
-import { sendCollageEmail } from '../services/emailjs.js';
+import { sendCollageToMultiple } from '../services/emailjs.js';
 import logoUrl from '../assets/logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -124,6 +124,13 @@ export class FinalScreen {
     await this.sendToEmails();
   }
 
+  _fetchWithTimeout(url, options, timeoutMs = 60000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
+
   async sendToEmails() {
     if (this.isSending) return;
 
@@ -147,65 +154,41 @@ export class FinalScreen {
 
     try {
       const collageDataUrl = this.app.getCollage();
-
-      // Step 1: Upload collage to Google Drive/server and save to Sheets
-      // This single request handles: Drive upload + Sheets append
       const primaryEmail = emails[0];
-      let collageUrl = '';
-      let collageId = Date.now();
 
-      try {
-        const uploadResponse = await fetch(`${API_URL}/save-collage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            image: collageDataUrl,
-            email: primaryEmail.email,
-            customerType: primaryEmail.customerType
-          })
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload collage');
+      // Run save-collage and send-email in parallel
+      const savePromise = this._fetchWithTimeout(`${API_URL}/save-collage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: collageDataUrl,
+          email: primaryEmail.email,
+          customerType: primaryEmail.customerType
+        })
+      }, 90000).then(async (res) => {
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) return result;
         }
-
-        const uploadResult = await uploadResponse.json();
-        if (uploadResult.success && uploadResult.url) {
-          collageUrl = uploadResult.url;
-          if (uploadResult.collageId) {
-            collageId = uploadResult.collageId;
-          }
-          console.log('Collage saved:', uploadResult);
-        }
-      } catch (uploadError) {
-        console.error('Failed to upload collage:', uploadError);
-        // Continue even if upload fails
-      }
-
-      // Build collage info for manager notification
-      const collageInfoForManager = {
-        collageId: collageId,
-        url: collageUrl,
-        datetime: new Date().toLocaleString('ru-RU')
-      };
-
-      // Step 2: Send emails to all saved addresses (first one includes manager notification)
-      const emailPromises = [];
-      emails.forEach(({ email, customerType }, index) => {
-        emailPromises.push(
-          sendCollageEmail(email, collageDataUrl, customerType, index === 0 ? collageInfoForManager : null)
-        );
+        return null;
+      }).catch((err) => {
+        console.error('Failed to save collage:', err);
+        return null;
       });
 
-      await Promise.all(emailPromises);
+      const recipients = emails.map(({ email, customerType }) => ({ email, customerType }));
+      const emailPromise = sendCollageToMultiple(recipients, collageDataUrl);
+
+      await Promise.all([savePromise, emailPromise]);
 
       // Show success message
       this.showSuccessMessage();
     } catch (error) {
       console.error('Send error:', error);
-      alert(error.message || 'Произошла ошибка. Попробуйте еще раз.');
+      const msg = error.name === 'AbortError'
+        ? 'Превышено время ожидания. Проверьте интернет и попробуйте ещё раз.'
+        : (error.message || 'Произошла ошибка. Попробуйте еще раз.');
+      alert(msg);
     } finally {
       this.isSending = false;
 

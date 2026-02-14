@@ -5,6 +5,13 @@
 
 const API_BASE = '/api';
 
+function fetchWithTimeout(url, options, timeoutMs = 90000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 /**
  * Send email with collage to a single recipient
  * @param {string} toEmail - Recipient email address
@@ -20,7 +27,7 @@ export async function sendCollageEmail(toEmail, collageDataUrl, customerType = '
   };
   if (collageInfo) body.collageInfo = collageInfo;
 
-  const response = await fetch(`${API_BASE}/send-email`, {
+  const response = await fetchWithTimeout(`${API_BASE}/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -50,7 +57,7 @@ export async function sendCollageToMultiple(recipients, collageDataUrl, collageI
   };
   if (collageInfo) body.collageInfo = collageInfo;
 
-  const response = await fetch(`${API_BASE}/send-email`, {
+  const response = await fetchWithTimeout(`${API_BASE}/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
