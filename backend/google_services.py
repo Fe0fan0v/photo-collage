@@ -78,11 +78,10 @@ class GoogleServices:
                     with open(oauth_token_path, 'w') as f:
                         json.dump(token_data, f, indent=2)
 
-                self.drive_service = build(
-                    'drive', 'v3',
-                    credentials=self.drive_credentials,
-                    client_options={'quota_project_id': 'seletti-collage'}
-                )
+                # Set quota project to avoid 403 with gcloud client ID
+                self.drive_credentials = self.drive_credentials.with_quota_project('seletti-collage')
+
+                self.drive_service = build('drive', 'v3', credentials=self.drive_credentials)
                 print("Google Drive initialized (OAuth2 user token)")
             except Exception as e:
                 print(f"Failed to initialize Drive OAuth2: {e}")
@@ -117,11 +116,8 @@ class GoogleServices:
             # Refresh OAuth token if needed
             if self.drive_credentials and (self.drive_credentials.expired or not self.drive_credentials.valid):
                 self.drive_credentials.refresh(Request())
-                self.drive_service = build(
-                    'drive', 'v3',
-                    credentials=self.drive_credentials,
-                    client_options={'quota_project_id': 'seletti-collage'}
-                )
+                self.drive_credentials = self.drive_credentials.with_quota_project('seletti-collage')
+                self.drive_service = build('drive', 'v3', credentials=self.drive_credentials)
 
             # Create file metadata
             file_metadata = {
