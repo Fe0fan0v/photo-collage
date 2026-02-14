@@ -36,8 +36,8 @@ photo-collage/
 │   │   ├── processing.js     # Обработка + анимированный прелоадер
 │   │   ├── success.js        # Результат + действия
 │   │   ├── email-form.js     # Ввод 2 email + типы клиентов
-│   │   ├── telegram-promo.js # Подтверждение "Готово!" + Telegram промо
-│   │   └── final.js          # Финальный экран с коллажем + промо + кнопки
+│   │   ├── telegram-promo.js # (устарел, теперь popup в final.js)
+│   │   └── final.js          # Финальный экран с коллажем + popup промо + кнопки
 │   ├── services/
 │   │   ├── background-removal.js  # Вызов API бэкенда
 │   │   ├── collage.js        # Сборка коллажа на Canvas
@@ -68,6 +68,8 @@ photo-collage/
 │   ├── email_service.py      # SMTP email сервис
 │   ├── requirements.txt
 │   ├── .env.example          # Пример переменных окружения
+│   ├── get_oauth_token.py    # Скрипт получения OAuth2 токена для Drive
+│   ├── oauth_token.json      # OAuth2 refresh token (не коммитится)
 │   └── venv/                 # Python виртуальное окружение
 └── uploads/                  # Локальные копии коллажей (backup)
 ```
@@ -282,6 +284,7 @@ sudo certbot certificates
 1. **Детекция лица** - MediaPipe надёжнее haarcascade, но может не найти лицо при плохом освещении (есть fallback)
 2. **Обработка времени** - удаление фона через rembg занимает 10-30 секунд на фото
 3. **Первый запуск backend** - скачивание модели MediaPipe (~5MB) при первом запуске
+4. **OOM Kill** - при высокой нагрузке (несколько одновременных обработок фото) backend может быть убит OOM killer (сервер 3.8 GB RAM)
 
 ---
 
@@ -353,11 +356,76 @@ sudo certbot certificates
 - **`src/screens/final.js`**: убрана большая Telegram-секция из scroll content, добавлена `final-bottom-panel` с компактной Telegram-строкой + кнопки
 - **`src/styles/main.css`**: новые стили `.final-bottom-panel`, `.final-telegram-row`, `.final-tg-icon`, `.final-tg-text`, `.final-tg-arrow`; экран `.screen-final` использует flex-layout
 
-### Известная проблема: Google Services
-- `Failed to initialize Google services: Invalid private key`
-- Google Drive/Sheets credentials на сервере невалидны
-- Коллажи сохраняются только локально в `/uploads/`
-- Требуется обновить `backend/credentials.json` на сервере
+### Telegram Promo как popup-overlay
+
+#### Проблема
+- Telegram Promo был отдельным полноэкранным экраном (telegram-promo.js)
+- Заказчик просил popup с прозрачным фоном, чтобы коллаж был виден за ним
+
+#### Решение: popup-overlay на финальном экране
+- **Telegram Promo** теперь рендерится как popup поверх финального экрана
+- Полупрозрачный тёмный фон (`rgba(0, 0, 0, 0.75)`), коллаж виден за ним
+- Содержимое popup: "Готово!", промо-текст, иконка Telegram (48px), "Хочу тарелку!", кнопки действий, www.seletti.ru
+- Анимация появления (opacity + scale)
+- Закрытие по × — popup убирается, остаётся финальный экран
+
+#### Изменения в навигации
+- **`src/screens/email-form.js`**: после отправки email → `navigateTo('final', { showTelegramPopup: true })` вместо `navigateTo('telegramPromo')`
+- **`src/screens/final.js`**: `mount(params)` проверяет `showTelegramPopup`, метод `showTelegramPopup()` создаёт overlay
+- **`src/styles/main.css`**: стили `.tg-popup-overlay`, `.tg-popup`, `.tg-popup-close`, `.tg-popup-title`, `.tg-popup-tg-link`, `.tg-popup-actions`
+- **`src/screens/telegram-promo.js`**: остаётся в коде, но не используется в навигации
+
+#### Структура popup
+```
+┌─────────────────────────────┐
+│ (полупрозрачный фон)         │
+│  ┌───────────────────────┐  │
+│  │              × │  │
+│  │     Готово!            │  │
+│  │  Выиграть тарелку...   │  │
+│  │     [TG icon]          │  │
+│  │   Хочу тарелку!        │  │
+│  │ [ОТПРАВИТЬ НА ПОЧТУ]   │  │
+│  │ [РАСПЕЧАТАТЬ]          │  │
+│  │    www.seletti.ru      │  │
+│  └───────────────────────┘  │
+│ (коллаж виден за overlay)    │
+└─────────────────────────────┘
+```
+
+### Исправление Google Services
+
+#### Проблема 1: Invalid private key
+- `credentials.json` на сервере содержал повреждённый ключ (1217 байт вместо 1218+)
+- **Решение**: сгенерирован новый ключ через `gcloud iam service-accounts keys create`
+
+#### Проблема 2: Service Account storage quota
+- Google убрал storage quota для Service Accounts на бесплатных Gmail аккаунтах
+- Ошибка: `Service Accounts do not have storage quota`
+- **Решение**: разделение credentials:
+  - **Google Sheets** → Service Account (`credentials.json`) — работает
+  - **Google Drive** → OAuth2 user token (`oauth_token.json`) от ok.lena.kazah@gmail.com
+  - `with_quota_project('seletti-collage')` для корректной тарификации API
+
+#### Файлы credentials на сервере
+- `/home/admin/photo-collage/backend/credentials.json` — Service Account (для Sheets)
+- `/home/admin/photo-collage/backend/oauth_token.json` — OAuth2 refresh token (для Drive)
+
+#### Обновление OAuth токена
+Если токен протухнет, запустить локально:
+```bash
+cd backend && python get_oauth_token.py
+# Откроется браузер для авторизации
+# Загрузить на сервер:
+B64=$(base64 -w0 oauth_token.json) && ssh admin@158.160.141.83 "echo '$B64' | base64 -d > /home/admin/photo-collage/backend/oauth_token.json"
+sudo systemctl restart collage-backend
+```
+
+### Очистка сервера
+- Удалены контейнеры **engcrm** (frontend + backend + PostgreSQL)
+- Отключён **MySQL** (не используется)
+- **construction-accounting-system** оставлен (порты 3000, 8002, 5433)
+- Освобождено ~1.5 GB RAM
 
 ---
 
@@ -639,20 +707,16 @@ PUBLIC_URL=https://seletti-hybrid.de-light.ru
 - Превью-миниатюра кликабельна для выбора из галереи
 - Инструкция: "Поместите лицо в овал. Разделение произойдет по желтой линии"
 
-#### Telegram Promo Screen
-- Показывается после отправки email
-- Большая надпись "Готово!"
-- Текст промо: "Выиграть тарелку из новой коллекции в Telegram"
-- Логотип Telegram (SVG с градиентом)
-- Кликабельная ссылка "Хочу тарелку!" → https://t.me/seletti_russia
-- Ссылка www.seletti.ru внизу
-- Крестик закрытия ведет на Final screen
+#### Telegram Promo (popup-overlay в Final Screen)
+- Появляется как popup после отправки email
+- Полупрозрачный фон, коллаж виден за ним
+- "Готово!", промо-текст, Telegram иконка (48px), "Хочу тарелку!" → t.me/seletti_russia
+- Кнопки действий и www.seletti.ru
+- Закрытие по × убирает popup
 
 #### Final Screen (коллаж + промо + кнопки)
-- Прокручиваемый экран со всем контентом
-- Плейсхолдер "SELETTI RUSSIAN HYBRID" (логотип будет позже)
-- Коллаж тарелки
-- Telegram промо блок (тот же что на предыдущем экране)
+- Коллаж в скроллируемой области
+- Фиксированная нижняя панель: компактная Telegram-строка + кнопки
 - Две желтые кнопки:
   - "ОТПРАВИТЬ НА ПОЧТУ В ХОРОШЕМ КАЧЕСТВЕ"
   - "РАСПЕЧАТАТЬ У МЕНЕДЖЕРА СТЕНДА"
@@ -682,8 +746,7 @@ Camera (фото 1)
   → Processing (анимация обработки)
   → Success (результат + кнопки)
   → Email Form (ввод 2 email + типы)
-  → Telegram Promo ("Готово!" + промо)
-  → Final (коллаж + промо + кнопки отправки)
+  → Final (коллаж + Telegram popup-overlay + кнопки отправки)
 ```
 
 При клике на кнопки "ОТПРАВИТЬ" или "РАСПЕЧАТАТЬ" на Final screen:
