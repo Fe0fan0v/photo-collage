@@ -1829,69 +1829,55 @@ p {
   display: block;
 }
 
-.final-telegram-section {
+.final-bottom-panel {
+  flex-shrink: 0;
+  background: #000000;
+  padding: 10px 20px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+.final-telegram-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  text-align: center;
-  width: 100%;
+  gap: 10px;
+  text-decoration: none;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: rgba(42, 171, 238, 0.1);
+  border: 1px solid rgba(42, 171, 238, 0.3);
+  transition: background var(--transition);
   max-width: 350px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.final-telegram-text {
-  font-size: 0.9rem;
-  color: var(--text-color);
-  line-height: 1.3;
-  margin: 0;
+.final-telegram-row:active {
+  background: rgba(42, 171, 238, 0.2);
 }
 
-.final-telegram-logo {
-  width: 70px;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.final-tg-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
-.final-telegram-logo svg {
+.final-tg-icon svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 4px 12px rgba(42, 171, 238, 0.4));
 }
 
-.final-telegram-link {
-  display: block;
-  transition: transform var(--transition);
-  cursor: pointer;
-}
-
-.final-telegram-link:hover {
-  transform: scale(1.1);
-}
-
-.final-telegram-link:active {
-  transform: scale(0.95);
-}
-
-.final-want-plate-text {
-  font-size: 1.2rem;
-  font-weight: 700;
+.final-tg-text {
+  flex: 1;
   color: var(--text-color);
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  transition: all var(--transition);
-  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.2;
 }
 
-.final-want-plate-text:hover {
-  color: var(--primary-color);
-  transform: scale(1.05);
-}
-
-.final-want-plate-text:active {
-  transform: scale(0.98);
+.final-tg-arrow {
+  color: rgba(42, 171, 238, 0.8);
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
 .final-actions {
@@ -1899,10 +1885,6 @@ p {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 20px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  background: #000000;
-  flex-shrink: 0;
 }
 
 .btn-final-action {
@@ -1931,26 +1913,16 @@ p {
     max-width: 400px;
   }
 
-  .final-telegram-section {
-    max-width: 450px;
-    gap: 25px;
-  }
-
-  .final-telegram-text {
-    font-size: 1.2rem;
-  }
-
-  .final-telegram-logo {
-    width: 120px;
-    height: 120px;
-  }
-
-  .final-want-plate-text {
-    font-size: 1.4rem;
-  }
-
-  .final-actions {
+  .final-bottom-panel {
     padding: 16px 40px;
+  }
+
+  .final-telegram-row {
+    max-width: 380px;
+  }
+
+  .final-tg-text {
+    font-size: 1rem;
   }
 
   .btn-final-action {
