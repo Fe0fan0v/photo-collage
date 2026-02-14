@@ -110,8 +110,10 @@ export class FinalScreen {
     printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
     actions.appendChild(printButton);
 
-    scrollContent.appendChild(actions);
     screen.appendChild(scrollContent);
+
+    // Action buttons OUTSIDE scroll content — fixed at bottom
+    screen.appendChild(actions);
 
     return screen;
   }
