@@ -285,7 +285,81 @@ sudo certbot certificates
 
 ---
 
-## Последние изменения (2026-02-12)
+## Последние изменения (2026-02-14)
+
+### Смена SMTP на hello@seletti.ru через mail.ru
+
+#### Что сделано
+- **SMTP сервер**: `smtp.gmail.com` → `smtp.mail.ru`
+- **Порт**: 587 (STARTTLS) → 465 (SSL)
+- **Адрес отправителя**: `Ok.lena.kazah@gmail.com` → `hello@seletti.ru`
+- **Протокол**: STARTTLS → SSL (`SMTP_USE_TLS=false` для SMTP_SSL)
+- **Systemd**: добавлен `EnvironmentFile=/home/admin/photo-collage/backend/.env` в `collage-backend.service`
+
+#### Backend .env (на сервере)
+```env
+SMTP_HOST=smtp.mail.ru
+SMTP_PORT=465
+SMTP_USER=hello@seletti.ru
+SMTP_PASSWORD=<пароль>
+SMTP_FROM=hello@seletti.ru
+SMTP_FROM_NAME=Seletti Russia
+SMTP_USE_TLS=false
+MANAGER_EMAIL=hybrid@de-light.ru
+GOOGLE_CREDENTIALS_PATH=credentials.json
+GOOGLE_SHEETS_ID=1dxStIaJgkqgea1IhC4IM6_Ih6Jj-v6YCC2GRDkt-3VU
+GOOGLE_DRIVE_FOLDER_ID=1hUav6hoIpVr4fR4b6xIpKQ3O4hKl3Axw
+PUBLIC_URL=https://seletti-hybrid.de-light.ru
+```
+
+### Автоматическая отправка копии менеджеру
+
+#### Функционал
+- При каждой отправке коллажа пользователям копия автоматически отправляется на `hybrid@de-light.ru`
+- Письмо менеджеру содержит:
+  - Коллаж (PNG-вложение)
+  - ID коллажа
+  - Дата и время
+  - Ссылка на коллаж в Google Drive
+  - Таблица получателей (email + тип клиента)
+- Настройка адреса менеджера через env-переменную `MANAGER_EMAIL`
+
+#### Изменения в коде
+- **`backend/email_service.py`**: добавлены методы `_build_manager_message()` и `send_manager_notification()`
+- **`backend/main.py`**: endpoint `/send-email` принимает `collageInfo` и отправляет уведомление менеджеру
+- **`src/services/emailjs.js`**: функции `sendCollageEmail()` и `sendCollageToMultiple()` передают `collageInfo`
+- **`src/screens/email-form.js`**: перед отправкой email сохраняет коллаж в Drive/Sheets и передаёт данные менеджеру
+- **`src/screens/final.js`**: передаёт `collageInfo` при повторной отправке
+
+### Исправление загрузки фото из галереи
+
+#### Проблема
+- Кнопка "Фото 1 / Загрузь" работала только после съёмки первого фото
+- Кнопка "Фото 2 / Загрузь" не имела обработчика клика
+
+#### Исправление
+- **`src/screens/camera.js`**: оба placeholder-а теперь кликабельны
+- Фото 1 можно загрузить из галереи в любой момент
+- Фото 2 можно загрузить из галереи после готовности Фото 1
+- Два отдельных `<input type="file">` для каждого фото
+- Загрузка из галереи корректно обновляет state и переключает шаг
+
+### Исправление камеры после "переснять"
+
+#### Проблема
+- В `mount()` вызов `restoreExistingPhotos()` содержал `await processFace()` (10-30 сек)
+- Камера запускалась только ПОСЛЕ завершения обработки фото
+- Пользователь видел чёрный экран камеры при возврате через "переснять"
+
+#### Исправление
+- **`src/screens/camera.js`**: камера запускается ПЕРВОЙ в `mount()`, до любой обработки
+- `restoreExistingPhotos()` стал синхронным (без `await`)
+- `processFace()` и `preloadModel()` выполняются в фоне (fire-and-forget)
+- Камера появляется мгновенно при возврате на экран
+
+---
+
+## Изменения (2026-02-12)
 
 ### Смена домена на seletti-hybrid.de-light.ru
 
@@ -325,20 +399,7 @@ sudo certbot certificates
 - **`backend/setup_google_cloud.bat`** — создание проекта, API, Service Account через gcloud CLI
 - **`backend/create_google_sheet.py`** — создание таблицы с форматированием через API
 
-#### Backend .env (на сервере)
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=Ok.lena.kazah@gmail.com
-SMTP_PASSWORD=<app-password>
-SMTP_FROM=Ok.lena.kazah@gmail.com
-SMTP_FROM_NAME=Seletti Russia
-SMTP_USE_TLS=true
-GOOGLE_CREDENTIALS_PATH=credentials.json
-GOOGLE_SHEETS_ID=1dxStIaJgkqgea1IhC4IM6_Ih6Jj-v6YCC2GRDkt-3VU
-GOOGLE_DRIVE_FOLDER_ID=1hUav6hoIpVr4fR4b6xIpKQ3O4hKl3Axw
-PUBLIC_URL=https://seletti-hybrid.de-light.ru
-```
+#### Backend .env (на сервере) — устарело, см. изменения от 2026-02-14
 
 ---
 
@@ -381,24 +442,14 @@ PUBLIC_URL=https://seletti-hybrid.de-light.ru
 - **Использование**: plate-select.js показывает thumbnails
 - **Результат**: экран выбора тарелок загружается в ~12 раз быстрее
 
-### Настройка SMTP для отправки email
-
-#### Backend .env конфигурация
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=Ok.lena.kazah@gmail.com
-SMTP_PASSWORD=ok33Poogle
-SMTP_FROM=Ok.lena.kazah@gmail.com
-SMTP_FROM_NAME=Seletti Russia
-SMTP_USE_TLS=true
-```
+### Настройка SMTP для отправки email (устарело, см. изменения от 2026-02-14)
 
 #### Функционал
 - Email отправка настроена и работает
-- Адрес отправителя: Ok.lena.kazah@gmail.com
+- Адрес отправителя: hello@seletti.ru (через smtp.mail.ru)
 - Два получателя поддерживаются
 - PNG-вложение с коллажем
+- Автоматическая копия менеджеру hybrid@de-light.ru
 
 ### Удалены дублирующиеся логотипы
 
@@ -587,14 +638,15 @@ GOOGLE_SHEETS_ID=your_sheets_id
 GOOGLE_DRIVE_FOLDER_ID=your_folder_id
 PUBLIC_URL=https://seletti-hybrid.de-light.ru
 
-# SMTP
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=Ok.lena.kazah@gmail.com
-SMTP_PASSWORD=<app-password>
-SMTP_FROM=Ok.lena.kazah@gmail.com
+# SMTP (mail.ru)
+SMTP_HOST=smtp.mail.ru
+SMTP_PORT=465
+SMTP_USER=hello@seletti.ru
+SMTP_PASSWORD=<пароль>
+SMTP_FROM=hello@seletti.ru
 SMTP_FROM_NAME=Seletti Russia
-SMTP_USE_TLS=true
+SMTP_USE_TLS=false
+MANAGER_EMAIL=hybrid@de-light.ru
 ```
 
 #### Безопасность
