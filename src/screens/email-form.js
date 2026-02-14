@@ -259,8 +259,8 @@ export class EmailFormScreen {
       }
       this.app.setEmails(emails);
 
-      // Navigate to Telegram promo screen
-      this.app.navigateTo('telegramPromo');
+      // Navigate to final screen with Telegram popup
+      this.app.navigateTo('final', { showTelegramPopup: true });
     } catch (error) {
       console.error('Submit error:', error);
       const msg = error.name === 'AbortError'

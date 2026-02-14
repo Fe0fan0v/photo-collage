@@ -200,8 +200,103 @@ export class FinalScreen {
     }
   }
 
-  mount() {
-    // Screen mounted
+  mount(params = {}) {
+    if (params.showTelegramPopup) {
+      this.showTelegramPopup();
+    }
+  }
+
+  showTelegramPopup() {
+    // Remove existing popup if any
+    const existing = document.querySelector('.tg-popup-overlay');
+    if (existing) existing.remove();
+
+    // Overlay
+    const overlay = createElement('div', { className: 'tg-popup-overlay' });
+
+    // Popup card
+    const popup = createElement('div', { className: 'tg-popup' });
+
+    // Close button
+    const closeBtn = createElement('button', {
+      className: 'tg-popup-close',
+      onClick: () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => overlay.remove(), 300);
+      }
+    });
+    closeBtn.innerHTML = '&times;';
+    popup.appendChild(closeBtn);
+
+    // "Готово!" title
+    const title = createElement('h2', { className: 'tg-popup-title' });
+    title.textContent = 'Готово!';
+    popup.appendChild(title);
+
+    // Promo text
+    const text = createElement('p', { className: 'tg-popup-text' });
+    text.textContent = 'Выиграть тарелку из новой коллекции в Telegram';
+    popup.appendChild(text);
+
+    // Telegram icon + link
+    const tgLink = createElement('a', {
+      className: 'tg-popup-tg-link',
+      href: 'https://t.me/seletti_russia',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    const tgIcon = createElement('div', { className: 'tg-popup-tg-icon' });
+    tgIcon.innerHTML = `<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tg-p" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2AABEE"/><stop offset="100%" stop-color="#229ED9"/></linearGradient></defs><circle cx="120" cy="120" r="120" fill="url(#tg-p)"/><path fill="#fff" d="M98 175c-3.9 0-3.2-1.5-4.6-5.2L82 132.2 168.6 80l4 2.3-3.4 3.3"/><path fill="#fff" d="M98 175c3 0 4.3-1.4 6-3l16-15.5-20-12"/><path fill="#fff" d="M100 144.6l48.4 35.7c5.5 3 9.5 1.5 10.9-5.1l19.7-92.8c2-8.1-3.1-11.7-8.4-9.3L55 117.5c-7.9 3.2-7.8 7.6-1.4 9.5l38.7 12.1 89.4-56.3c4.2-2.6 8.1-1.2 4.9 1.6"/></svg>`;
+    tgLink.appendChild(tgIcon);
+    const tgLabel = createElement('span', { className: 'tg-popup-tg-label' });
+    tgLabel.textContent = 'Хочу тарелку!';
+    tgLink.appendChild(tgLabel);
+    popup.appendChild(tgLink);
+
+    // Action buttons
+    const actions = createElement('div', { className: 'tg-popup-actions' });
+
+    const emailBtn = createElement('button', {
+      className: 'btn btn-primary btn-final-action',
+      onClick: () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => overlay.remove(), 300);
+        this.handleSendEmail();
+      }
+    });
+    emailBtn.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
+    actions.appendChild(emailBtn);
+
+    const printBtn = createElement('button', {
+      className: 'btn btn-primary btn-final-action',
+      onClick: () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => overlay.remove(), 300);
+        this.handlePrint();
+      }
+    });
+    printBtn.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
+    actions.appendChild(printBtn);
+
+    popup.appendChild(actions);
+
+    // Website link
+    const website = createElement('a', {
+      className: 'tg-popup-website',
+      href: 'https://www.seletti.ru',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    website.textContent = 'www.seletti.ru';
+    popup.appendChild(website);
+
+    overlay.appendChild(popup);
+    document.querySelector('.screen-final').appendChild(overlay);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+    });
   }
 
   cleanup() {
