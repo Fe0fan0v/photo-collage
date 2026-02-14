@@ -285,7 +285,50 @@ sudo certbot certificates
 
 ---
 
-## Последние изменения (2026-02-14)
+## Последние изменения (2026-02-14 вечер)
+
+### Исправление зависания экрана отправки email
+
+#### Проблема
+- Кнопка "Отправляем..." зависала навсегда на мобильном (LTE)
+- Два тяжёлых fetch-запроса (save-collage + send-email) шли **последовательно** без таймаутов
+- Уведомление менеджеру блокировало ответ пользователю (ещё +30 сек)
+- SMTP пароль был обычным (не пароль приложения) — mail.ru отклонял авторизацию
+
+#### Исправления
+
+##### Frontend: таймауты и параллельные запросы
+- **`src/services/emailjs.js`**: добавлен `fetchWithTimeout()` с `AbortController` (90 сек таймаут)
+- **`src/screens/email-form.js`**: `save-collage` и `send-email` запускаются **параллельно** через `Promise.all`
+  - `save-collage` опциональный (`.catch()` → `null`), не блокирует отправку email
+  - При таймауте показывается понятное сообщение, кнопка разблокируется
+- **`src/screens/final.js`**: аналогичные параллельные запросы + один `sendCollageToMultiple` вместо отдельных вызовов на каждый email
+
+##### Backend: асинхронное уведомление менеджеру
+- **`backend/main.py`**: `send_manager_notification` через `asyncio.create_task()` (fire-and-forget)
+  - Ответ пользователю уходит сразу после отправки его писем
+  - Менеджерское письмо отправляется в фоне
+
+##### SMTP: пароль приложения
+- Обновлён `SMTP_PASSWORD` в `.env` на пароль приложения mail.ru
+- Обычный пароль не работал: mail.ru требует пароль приложения для SMTP
+
+#### Результат
+| До | После |
+|----|-------|
+| save-collage (30с) + send 2 emails (60с) + manager (30с) = **120с** | max(save-collage, send 2 emails) = **~1-2с** |
+| Без таймаута — зависание навечно | Таймаут 90с — кнопка разблокируется |
+| SMTP auth error | SMTP работает |
+
+### Известная проблема: Google Services
+- `Failed to initialize Google services: Invalid private key`
+- Google Drive/Sheets credentials на сервере невалидны
+- Коллажи сохраняются только локально в `/uploads/`
+- Требуется обновить `backend/credentials.json` на сервере
+
+---
+
+## Изменения (2026-02-14)
 
 ### Смена SMTP на hello@seletti.ru через mail.ru
 
