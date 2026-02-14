@@ -7,6 +7,8 @@ import { createElement, isValidEmail } from '../utils/helpers.js';
 import { sendCollageToMultiple } from '../services/emailjs.js';
 import logoUrl from '../assets/logo.png';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const CUSTOMER_TYPES = [
   'Частный покупатель',
   'Дизайнер',
@@ -199,8 +201,34 @@ export class EmailFormScreen {
         recipients.push({ email: email2, customerType: customerType2 });
       }
 
-      // Send to all recipients in a single request
-      await sendCollageToMultiple(recipients, collageDataUrl);
+      // Step 1: Save collage to Google Drive/Sheets
+      let collageInfo = null;
+      try {
+        const uploadResponse = await fetch(`${API_URL}/save-collage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: collageDataUrl,
+            email: email1,
+            customerType: customerType1
+          })
+        });
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json();
+          if (uploadResult.success) {
+            collageInfo = {
+              collageId: uploadResult.collageId,
+              url: uploadResult.url,
+              datetime: new Date().toLocaleString('ru-RU')
+            };
+          }
+        }
+      } catch (uploadError) {
+        console.error('Failed to save collage:', uploadError);
+      }
+
+      // Step 2: Send to all recipients + manager notification
+      await sendCollageToMultiple(recipients, collageDataUrl, collageInfo);
 
       // Save emails to app state
       const emails = [{ email: email1, customerType: customerType1 }];

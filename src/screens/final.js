@@ -184,11 +184,18 @@ export class FinalScreen {
         // Continue even if upload fails
       }
 
-      // Step 2: Send emails to all saved addresses
+      // Build collage info for manager notification
+      const collageInfoForManager = {
+        collageId: collageId,
+        url: collageUrl,
+        datetime: new Date().toLocaleString('ru-RU')
+      };
+
+      // Step 2: Send emails to all saved addresses (first one includes manager notification)
       const emailPromises = [];
-      emails.forEach(({ email, customerType }) => {
+      emails.forEach(({ email, customerType }, index) => {
         emailPromises.push(
-          sendCollageEmail(email, collageDataUrl, customerType)
+          sendCollageEmail(email, collageDataUrl, customerType, index === 0 ? collageInfoForManager : null)
         );
       });
 

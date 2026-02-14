@@ -340,6 +340,7 @@ async def send_email(data: dict = Body(...)):
     try:
         image_data = data.get('image', '')
         recipients = data.get('recipients', [])
+        collage_info = data.get('collageInfo', None)
 
         if not image_data:
             return JSONResponse({'success': False, 'message': 'Изображение не предоставлено', 'results': []})
@@ -358,6 +359,9 @@ async def send_email(data: dict = Body(...)):
 
         # Run blocking SMTP in a thread
         results = await asyncio.to_thread(email_service.send_to_multiple, recipients, image_bytes)
+
+        # Send manager notification with collage info
+        await asyncio.to_thread(email_service.send_manager_notification, image_bytes, recipients, collage_info)
 
         all_ok = all(r['success'] for r in results)
 

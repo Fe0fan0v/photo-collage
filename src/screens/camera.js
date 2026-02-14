@@ -103,19 +103,27 @@ export class CameraScreen {
     // Photo 1 thumbnail placeholder (clickable to open gallery)
     this.photo1Thumbnail = createElement('div', {
       className: 'photo-placeholder clickable',
-      onClick: () => this.handlePhoto1Click()
+      onClick: () => this.handlePhotoUpload(0)
     });
     this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
     controls.appendChild(this.photo1Thumbnail);
 
-    // Hidden file input for gallery selection
-    this.fileInput = createElement('input', {
+    // Hidden file inputs for gallery selection
+    this.fileInput1 = createElement('input', {
       type: 'file',
       accept: 'image/*',
       style: { display: 'none' },
-      onChange: (e) => this.handleGallerySelect(e)
+      onChange: (e) => this.handleGallerySelect(e, 0)
     });
-    screen.appendChild(this.fileInput);
+    screen.appendChild(this.fileInput1);
+
+    this.fileInput2 = createElement('input', {
+      type: 'file',
+      accept: 'image/*',
+      style: { display: 'none' },
+      onChange: (e) => this.handleGallerySelect(e, 1)
+    });
+    screen.appendChild(this.fileInput2);
 
     // Capture button
     const captureButton = createElement('button', {
@@ -124,8 +132,11 @@ export class CameraScreen {
     });
     controls.appendChild(captureButton);
 
-    // Photo 2 thumbnail placeholder
-    this.photo2Thumbnail = createElement('div', { className: 'photo-placeholder' });
+    // Photo 2 thumbnail placeholder (clickable to open gallery)
+    this.photo2Thumbnail = createElement('div', {
+      className: 'photo-placeholder clickable',
+      onClick: () => this.handlePhotoUpload(1)
+    });
     this.photo2Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 2<br>Загрузь</span>';
     controls.appendChild(this.photo2Thumbnail);
 
@@ -139,24 +150,26 @@ export class CameraScreen {
   }
 
   async mount() {
-    // Restore existing photos if retaking
-    await this.restoreExistingPhotos();
-
-    // Check API availability
-    const apiAvailable = await preloadModel();
-    if (!apiAvailable) {
-      this.showError('⚠️ Backend сервер не отвечает. Обработка фото будет недоступна.');
-    }
-
+    // Start camera FIRST so user sees it immediately
     try {
       await this.startCamera();
     } catch (error) {
       this.showError('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ и обновите страницу.');
       console.error('Camera access error:', error);
     }
+
+    // Restore existing photos (thumbnails etc.) without blocking camera
+    this.restoreExistingPhotos();
+
+    // Check API availability in background
+    preloadModel().then(apiAvailable => {
+      if (!apiAvailable) {
+        this.showError('⚠️ Backend сервер не отвечает. Обработка фото будет недоступна.');
+      }
+    });
   }
 
-  async restoreExistingPhotos() {
+  restoreExistingPhotos() {
     const photos = this.app.getPhotos();
 
     // Restore photo 1 if it exists
@@ -165,13 +178,12 @@ export class CameraScreen {
       this.photo1DataUrl = photo1DataUrl;
       this.updateThumbnail(this.photo1Thumbnail, photo1DataUrl);
 
-      // Process photo 1 in background (no preview needed)
-      try {
-        const processed = await processFace(photos[0]);
+      // Process photo 1 in background (non-blocking)
+      processFace(photos[0]).then(processed => {
         this.photo1FaceData = processed;
-      } catch (error) {
+      }).catch(error => {
         console.error('Failed to process photo 1 for preview:', error);
-      }
+      });
     }
 
     // Update half overlay position based on current photo
@@ -262,10 +274,11 @@ export class CameraScreen {
     }
   }
 
-  handlePhoto1Click() {
-    // Only allow clicking if we're on photo 2 (after photo 1 is taken)
-    if (this.currentPhotoIndex >= 1) {
-      this.fileInput.click();
+  handlePhotoUpload(photoIndex) {
+    if (photoIndex === 0) {
+      this.fileInput1.click();
+    } else if (photoIndex === 1 && this.currentPhotoIndex >= 1) {
+      this.fileInput2.click();
     }
   }
 
@@ -280,27 +293,47 @@ export class CameraScreen {
     }
   }
 
-  async handleGallerySelect(event) {
+  async handleGallerySelect(event, photoIndex) {
     const file = event.target.files[0];
     if (!file) return;
 
     try {
-      // Convert file to blob
       const blob = new Blob([await file.arrayBuffer()], { type: file.type });
-
-      // Replace photo 1 in app state
-      const photos = this.app.getPhotos();
-      photos[0] = blob;
-
-      // Update thumbnail
       const photoDataUrl = URL.createObjectURL(blob);
-      this.photo1DataUrl = photoDataUrl;
-      this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
+      const photos = this.app.getPhotos();
 
-      // Process and update preview
-      await this.processPhoto1ForPreview(blob);
+      if (photoIndex === 0) {
+        // Upload/replace photo 1
+        if (photos.length === 0) {
+          this.app.addPhoto(blob);
+        } else {
+          photos[0] = blob;
+        }
+        this.photo1DataUrl = photoDataUrl;
+        this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
 
-      // Reset file input
+        // If we were on photo 1, advance to photo 2
+        if (this.currentPhotoIndex === 0) {
+          this.showSuccessAnimation();
+          this.processPhoto1ForPreview(blob);
+          this.currentPhotoIndex = 1;
+          this.updateHalfOverlay();
+        } else {
+          // Re-process photo 1 preview
+          this.processPhoto1ForPreview(blob);
+        }
+      } else if (photoIndex === 1) {
+        // Upload/replace photo 2
+        if (photos.length < 2) {
+          this.app.addPhoto(blob);
+        } else {
+          photos[1] = blob;
+        }
+        this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
+        // Navigate to photos ready
+        this.app.navigateTo('photosReady');
+      }
+
       event.target.value = '';
     } catch (error) {
       console.error('Error handling gallery selection:', error);

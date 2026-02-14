@@ -10,16 +10,20 @@ const API_BASE = '/api';
  * @param {string} toEmail - Recipient email address
  * @param {string} collageDataUrl - Collage image as data URL
  * @param {string} customerType - Customer type (optional)
+ * @param {Object} collageInfo - Collage info for manager notification (optional)
  * @returns {Promise<void>}
  */
-export async function sendCollageEmail(toEmail, collageDataUrl, customerType = '') {
+export async function sendCollageEmail(toEmail, collageDataUrl, customerType = '', collageInfo = null) {
+  const body = {
+    image: collageDataUrl,
+    recipients: [{ email: toEmail, customerType }]
+  };
+  if (collageInfo) body.collageInfo = collageInfo;
+
   const response = await fetch(`${API_BASE}/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      image: collageDataUrl,
-      recipients: [{ email: toEmail, customerType }]
-    })
+    body: JSON.stringify(body)
   });
 
   const data = await response.json();
@@ -36,16 +40,20 @@ export async function sendCollageEmail(toEmail, collageDataUrl, customerType = '
  * Send collage email to multiple recipients in a single request
  * @param {Array<{email: string, customerType: string}>} recipients
  * @param {string} collageDataUrl - Collage image as data URL
+ * @param {Object} collageInfo - Collage info for manager notification (optional)
  * @returns {Promise<Object>}
  */
-export async function sendCollageToMultiple(recipients, collageDataUrl) {
+export async function sendCollageToMultiple(recipients, collageDataUrl, collageInfo = null) {
+  const body = {
+    image: collageDataUrl,
+    recipients
+  };
+  if (collageInfo) body.collageInfo = collageInfo;
+
   const response = await fetch(`${API_BASE}/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      image: collageDataUrl,
-      recipients
-    })
+    body: JSON.stringify(body)
   });
 
   const data = await response.json();
