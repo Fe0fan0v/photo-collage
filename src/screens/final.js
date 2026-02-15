@@ -1,6 +1,7 @@
 /**
  * Final Screen
  * Shows collage with Telegram promo and action buttons
+ * After email sent: shows "Готово!" popup that auto-closes, then this screen
  */
 
 import { createElement } from '../utils/helpers.js';
@@ -31,7 +32,7 @@ export class FinalScreen {
     // Scrollable content
     const scrollContent = createElement('div', { className: 'final-scroll-content' });
 
-    // Collage preview (logo is already in collage background)
+    // Collage preview
     const collageDataUrl = this.app.getCollage();
 
     if (collageDataUrl) {
@@ -44,7 +45,25 @@ export class FinalScreen {
       scrollContent.appendChild(preview);
     }
 
-    // Action buttons (right after collage so they're visible)
+    // Telegram section (between collage and buttons, like reference)
+    const telegramSection = createElement('a', {
+      className: 'final-telegram-section',
+      href: 'https://t.me/selettistoremoscow/607',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    const tgText = createElement('p', { className: 'final-tg-text' });
+    tgText.textContent = 'Выиграть тарелку из новой коллекции в Telegram';
+    telegramSection.appendChild(tgText);
+    const tgIcon = createElement('div', { className: 'final-tg-icon' });
+    tgIcon.innerHTML = `<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tg-g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2AABEE"/><stop offset="100%" stop-color="#229ED9"/></linearGradient></defs><circle cx="120" cy="120" r="120" fill="url(#tg-g)"/><path fill="#fff" d="M98 175c-3.9 0-3.2-1.5-4.6-5.2L82 132.2 168.6 80l4 2.3-3.4 3.3"/><path fill="#fff" d="M98 175c3 0 4.3-1.4 6-3l16-15.5-20-12"/><path fill="#fff" d="M100 144.6l48.4 35.7c5.5 3 9.5 1.5 10.9-5.1l19.7-92.8c2-8.1-3.1-11.7-8.4-9.3L55 117.5c-7.9 3.2-7.8 7.6-1.4 9.5l38.7 12.1 89.4-56.3c4.2-2.6 8.1-1.2 4.9 1.6"/></svg>`;
+    telegramSection.appendChild(tgIcon);
+    const tgLabel = createElement('span', { className: 'final-tg-label' });
+    tgLabel.textContent = 'Хочу тарелку!';
+    telegramSection.appendChild(tgLabel);
+    scrollContent.appendChild(telegramSection);
+
+    // Action buttons
     const actions = createElement('div', { className: 'final-actions' });
 
     const emailButton = createElement('button', {
@@ -63,23 +82,26 @@ export class FinalScreen {
 
     scrollContent.appendChild(actions);
 
-    // Telegram section (vertical, centered)
-    const telegramSection = createElement('a', {
-      className: 'final-telegram-section',
-      href: 'https://t.me/selettistoremoscow/607',
+    // Website link
+    const websiteLink = createElement('a', {
+      className: 'final-website-link',
+      href: 'https://www.seletti.ru',
       target: '_blank',
       rel: 'noopener noreferrer'
     });
-    const tgText = createElement('p', { className: 'final-tg-text' });
-    tgText.textContent = 'Выиграть тарелку из новой коллекции в Telegram';
-    telegramSection.appendChild(tgText);
-    const tgIcon = createElement('div', { className: 'final-tg-icon' });
-    tgIcon.innerHTML = `<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tg-g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2AABEE"/><stop offset="100%" stop-color="#229ED9"/></linearGradient></defs><circle cx="120" cy="120" r="120" fill="url(#tg-g)"/><path fill="#fff" d="M98 175c-3.9 0-3.2-1.5-4.6-5.2L82 132.2 168.6 80l4 2.3-3.4 3.3"/><path fill="#fff" d="M98 175c3 0 4.3-1.4 6-3l16-15.5-20-12"/><path fill="#fff" d="M100 144.6l48.4 35.7c5.5 3 9.5 1.5 10.9-5.1l19.7-92.8c2-8.1-3.1-11.7-8.4-9.3L55 117.5c-7.9 3.2-7.8 7.6-1.4 9.5l38.7 12.1 89.4-56.3c4.2-2.6 8.1-1.2 4.9 1.6"/></svg>`;
-    telegramSection.appendChild(tgIcon);
-    const tgLabel = createElement('span', { className: 'final-tg-label' });
-    tgLabel.textContent = 'Хочу тарелку!';
-    telegramSection.appendChild(tgLabel);
-    scrollContent.appendChild(telegramSection);
+    websiteLink.textContent = 'www.seletti.ru';
+    scrollContent.appendChild(websiteLink);
+
+    // Start over button
+    const restartBtn = createElement('button', {
+      className: 'btn btn-primary btn-restart-small',
+      onClick: () => {
+        this.app.reset();
+        this.app.navigateTo('camera');
+      }
+    });
+    restartBtn.textContent = 'НАЧАТЬ СНАЧАЛА';
+    scrollContent.appendChild(restartBtn);
 
     screen.appendChild(scrollContent);
 
@@ -198,25 +220,22 @@ export class FinalScreen {
 
   mount(params = {}) {
     if (params.showTelegramPopup) {
-      this.showTelegramPopup();
+      this.showGotovoPopup();
     }
   }
 
-  showTelegramPopup() {
+  showGotovoPopup() {
     // Remove existing popup if any
     const existing = document.querySelector('.tg-popup-overlay');
     if (existing) existing.remove();
 
-    // Overlay — elements placed directly on it (no card background)
+    // Simple overlay with "Готово!" + Telegram promo
     const overlay = createElement('div', { className: 'tg-popup-overlay' });
 
-    // Close button (yellow circle, like .close-button)
+    // Close button (yellow circle)
     const closeBtn = createElement('button', {
       className: 'tg-popup-close',
-      onClick: () => {
-        overlay.classList.remove('visible');
-        setTimeout(() => overlay.remove(), 300);
-      }
+      onClick: () => this.closePopup(overlay)
     });
     closeBtn.innerHTML = '&times;';
     overlay.appendChild(closeBtn);
@@ -246,66 +265,33 @@ export class FinalScreen {
     tgLink.appendChild(tgLabel);
     overlay.appendChild(tgLink);
 
-    // Action buttons
-    const actions = createElement('div', { className: 'tg-popup-actions' });
-
-    const emailBtn = createElement('button', {
-      className: 'btn btn-primary btn-final-action',
-      onClick: () => {
-        overlay.classList.remove('visible');
-        setTimeout(() => overlay.remove(), 300);
-        this.handleSendEmail();
-      }
-    });
-    emailBtn.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
-    actions.appendChild(emailBtn);
-
-    const printBtn = createElement('button', {
-      className: 'btn btn-primary btn-final-action',
-      onClick: () => {
-        overlay.classList.remove('visible');
-        setTimeout(() => overlay.remove(), 300);
-        this.handlePrint();
-      }
-    });
-    printBtn.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
-    actions.appendChild(printBtn);
-
-    overlay.appendChild(actions);
-
-    // "НАЧАТЬ СНАЧАЛА" button
-    const restartBtn = createElement('button', {
-      className: 'tg-popup-restart',
-      onClick: () => {
-        overlay.classList.remove('visible');
-        setTimeout(() => {
-          overlay.remove();
-          this.app.navigateTo('camera');
-        }, 300);
-      }
-    });
-    restartBtn.textContent = 'НАЧАТЬ СНАЧАЛА';
-    overlay.appendChild(restartBtn);
-
-    // Website link (below all buttons)
-    const website = createElement('a', {
-      className: 'tg-popup-website',
-      href: 'https://www.seletti.ru',
-      target: '_blank',
-      rel: 'noopener noreferrer'
-    });
-    website.textContent = 'www.seletti.ru';
-    overlay.appendChild(website);
-
     document.querySelector('.screen-final').appendChild(overlay);
 
     // Animate in
     requestAnimationFrame(() => {
       overlay.classList.add('visible');
     });
+
+    // Auto-close after 2 seconds
+    this._popupTimer = setTimeout(() => {
+      this.closePopup(overlay);
+    }, 2000);
+  }
+
+  closePopup(overlay) {
+    if (this._popupTimer) {
+      clearTimeout(this._popupTimer);
+      this._popupTimer = null;
+    }
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.remove(), 300);
   }
 
   cleanup() {
     this.isSending = false;
+    if (this._popupTimer) {
+      clearTimeout(this._popupTimer);
+      this._popupTimer = null;
+    }
   }
 }

@@ -795,6 +795,20 @@ p {
   text-decoration: underline;
 }
 
+.final-website-link {
+  color: var(--text-color);
+  text-decoration: none;
+  font-size: 1rem;
+  margin-top: 16px;
+  text-align: center;
+  display: block;
+}
+
+.final-website-link:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
 .success-confirmation {
   position: absolute;
   top: 50%;
