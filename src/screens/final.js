@@ -80,19 +80,7 @@ export class FinalScreen {
     printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
     actions.appendChild(printButton);
 
-    scrollContent.appendChild(actions);
-
-    // Website link
-    const websiteLink = createElement('a', {
-      className: 'final-website-link',
-      href: 'https://www.seletti.ru',
-      target: '_blank',
-      rel: 'noopener noreferrer'
-    });
-    websiteLink.textContent = 'www.seletti.ru';
-    scrollContent.appendChild(websiteLink);
-
-    // Start over button
+    // Start over button (together with other buttons)
     const restartBtn = createElement('button', {
       className: 'btn btn-primary btn-restart-small',
       onClick: () => {
@@ -101,7 +89,19 @@ export class FinalScreen {
       }
     });
     restartBtn.textContent = 'НАЧАТЬ СНАЧАЛА';
-    scrollContent.appendChild(restartBtn);
+    actions.appendChild(restartBtn);
+
+    scrollContent.appendChild(actions);
+
+    // Website link (below all buttons)
+    const websiteLink = createElement('a', {
+      className: 'final-website-link',
+      href: 'https://www.seletti.ru',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    websiteLink.textContent = 'www.seletti.ru';
+    scrollContent.appendChild(websiteLink);
 
     screen.appendChild(scrollContent);
 
