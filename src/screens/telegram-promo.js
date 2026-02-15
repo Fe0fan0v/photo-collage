@@ -66,7 +66,7 @@ export class TelegramPromoScreen {
     // Telegram link
     const telegramLink = createElement('a', {
       className: 'telegram-promo-link',
-      href: 'https://t.me/selettistoremoscow/607',
+      href: 'tg://resolve?domain=selettistoremoscow&post=607',
       target: '_blank',
       rel: 'noopener noreferrer'
     });

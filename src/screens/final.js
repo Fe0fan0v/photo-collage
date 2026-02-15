@@ -48,7 +48,7 @@ export class FinalScreen {
     // Telegram section (between collage and buttons, like reference)
     const telegramSection = createElement('a', {
       className: 'final-telegram-section',
-      href: 'https://t.me/selettistoremoscow/607',
+      href: 'tg://resolve?domain=selettistoremoscow&post=607',
       target: '_blank',
       rel: 'noopener noreferrer'
     });
@@ -253,7 +253,7 @@ export class FinalScreen {
     // Telegram icon + link
     const tgLink = createElement('a', {
       className: 'tg-popup-tg-link',
-      href: 'https://t.me/selettistoremoscow/607',
+      href: 'tg://resolve?domain=selettistoremoscow&post=607',
       target: '_blank',
       rel: 'noopener noreferrer'
     });
