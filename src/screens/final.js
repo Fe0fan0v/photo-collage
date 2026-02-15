@@ -155,7 +155,8 @@ export class FinalScreen {
         body: JSON.stringify({
           image: collageDataUrl,
           email: primaryEmail.email,
-          customerType: primaryEmail.customerType
+          customerType: primaryEmail.customerType,
+          recipients
         })
       }, 90000).then(async (res) => {
         if (res.ok) {

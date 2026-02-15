@@ -233,7 +233,8 @@ export class EmailFormScreen {
         body: JSON.stringify({
           image: collageDataUrl,
           email: email1,
-          customerType: customerType1
+          customerType: customerType1,
+          recipients
         })
       }, 90000).then(async (res) => {
         if (res.ok) {

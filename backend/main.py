@@ -306,20 +306,29 @@ async def save_collage(data: dict = Body(...)):
         # Get next collage ID and save to Google Sheets
         collage_id = google_services.get_next_collage_id()
 
-        if google_services.is_configured() and email:
+        # Support multiple recipients (or single email for backward compat)
+        recipients = data.get('recipients', [])
+        if not recipients and email:
+            recipients = [{'email': email, 'customerType': customer_type}]
+
+        if google_services.is_configured() and recipients:
             # Format datetime for Russian locale (Moscow timezone)
             datetime_str = datetime.now(ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M:%S')
 
-            success = google_services.append_to_sheet({
-                'collage_id': collage_id,
-                'datetime': datetime_str,
-                'email': email,
-                'customer_type': customer_type,
-                'collage_url': public_url
-            })
-
-            if not success:
-                print("Warning: Failed to save to Google Sheets, but file was uploaded")
+            for r in recipients:
+                r_email = r.get('email', '')
+                r_type = r.get('customerType', '')
+                if not r_email:
+                    continue
+                success = google_services.append_to_sheet({
+                    'collage_id': collage_id,
+                    'datetime': datetime_str,
+                    'email': r_email,
+                    'customer_type': r_type,
+                    'collage_url': public_url
+                })
+                if not success:
+                    print(f"Warning: Failed to save {r_email} to Google Sheets")
 
         return JSONResponse({
             "success": True,
