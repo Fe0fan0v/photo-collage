@@ -56,7 +56,8 @@ export class PhotosReadyScreen {
     const photo1 = createElement('img', {
       className: 'photo-ready-image',
       src: photos[0] ? URL.createObjectURL(photos[0]) : '',
-      alt: 'Фото 1'
+      alt: 'Фото 1',
+      draggable: 'false'
     });
     photo1Container.appendChild(photo1);
     photosGrid.appendChild(photo1Container);
@@ -69,7 +70,8 @@ export class PhotosReadyScreen {
     const photo2 = createElement('img', {
       className: 'photo-ready-image',
       src: photos[1] ? URL.createObjectURL(photos[1]) : '',
-      alt: 'Фото 2'
+      alt: 'Фото 2',
+      draggable: 'false'
     });
     photo2Container.appendChild(photo2);
     photosGrid.appendChild(photo2Container);

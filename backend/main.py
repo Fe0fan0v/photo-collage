@@ -21,6 +21,7 @@ import base64
 import os
 import urllib.request
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import secrets
 
 from google_services import google_services
@@ -283,7 +284,7 @@ async def save_collage(data: dict = Body(...)):
         image_bytes = base64.b64decode(image_data)
 
         # Generate unique filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now(ZoneInfo('Europe/Moscow')).strftime('%Y%m%d_%H%M%S')
         random_suffix = secrets.token_hex(4)
         filename = f"collage_{timestamp}_{random_suffix}.png"
 
@@ -306,8 +307,8 @@ async def save_collage(data: dict = Body(...)):
         collage_id = google_services.get_next_collage_id()
 
         if google_services.is_configured() and email:
-            # Format datetime for Russian locale
-            datetime_str = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
+            # Format datetime for Russian locale (Moscow timezone)
+            datetime_str = datetime.now(ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M:%S')
 
             success = google_services.append_to_sheet({
                 'collage_id': collage_id,

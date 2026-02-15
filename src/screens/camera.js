@@ -103,7 +103,7 @@ export class CameraScreen {
     // Photo 1 thumbnail placeholder (clickable to open gallery)
     this.photo1Thumbnail = createElement('div', {
       className: 'photo-placeholder clickable',
-      onClick: () => this.handlePhotoUpload(0)
+      onClick: () => this.handleThumbnailClick(0)
     });
     this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
     controls.appendChild(this.photo1Thumbnail);
@@ -135,7 +135,7 @@ export class CameraScreen {
     // Photo 2 thumbnail placeholder (clickable to open gallery)
     this.photo2Thumbnail = createElement('div', {
       className: 'photo-placeholder clickable',
-      onClick: () => this.handlePhotoUpload(1)
+      onClick: () => this.handleThumbnailClick(1)
     });
     this.photo2Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 2<br>Загрузь</span>';
     controls.appendChild(this.photo2Thumbnail);
@@ -271,6 +271,17 @@ export class CameraScreen {
     } else {
       // Second photo - shade left half
       this.halfOverlay.className = 'camera-half-overlay left';
+    }
+  }
+
+  handleThumbnailClick(photoIndex) {
+    const photos = this.app.getPhotos();
+    if (photos[photoIndex]) {
+      // Photo exists — go to review screen
+      this.app.navigateTo('photoReview', { photoIndex });
+    } else {
+      // No photo yet — open file picker
+      this.handlePhotoUpload(photoIndex);
     }
   }
 

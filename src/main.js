@@ -13,6 +13,7 @@ import { EmailFormScreen } from './screens/email-form.js';
 import { SuccessScreen } from './screens/success.js';
 import { TelegramPromoScreen } from './screens/telegram-promo.js';
 import { FinalScreen } from './screens/final.js';
+import { saveSession, restoreSession, clearSession } from './utils/session-persistence.js';
 
 class App {
   constructor() {
@@ -43,8 +44,15 @@ class App {
   /**
    * Initialize the app
    */
-  init() {
-    this.navigateTo('camera');
+  async init() {
+    // Try to restore saved session (survives phone lock / page reload)
+    const saved = await restoreSession();
+    if (saved) {
+      this.state = saved.state;
+      this.navigateTo(saved.screen);
+    } else {
+      this.navigateTo('camera');
+    }
   }
 
   /**
@@ -76,6 +84,9 @@ class App {
 
     // Initialize screen with params
     await screen.mount?.(params);
+
+    // Persist state to sessionStorage (survives phone lock / reload)
+    saveSession(screenName, this.state);
   }
 
   /**
@@ -163,6 +174,7 @@ class App {
       collageDataUrl: null,
       emails: []
     };
+    clearSession();
   }
 }
 
