@@ -151,9 +151,9 @@ class GoogleServices:
                 }
             ).execute()
 
-            # Get direct link to image
-            # Format: https://drive.google.com/uc?export=view&id=FILE_ID
-            public_url = f"https://drive.google.com/uc?export=view&id={file_id}"
+            # Get link to view image
+            # Format: https://drive.google.com/file/d/FILE_ID/view
+            public_url = f"https://drive.google.com/file/d/{file_id}/view"
 
             print(f"File uploaded to Google Drive: {public_url}")
             return public_url
