@@ -38,16 +38,6 @@ export class PhotosReadyScreen {
     title.textContent = 'Фото готовы!';
     content.appendChild(title);
 
-    // Main continue button
-    const mainButtonContainer = createElement('div', { className: 'photos-ready-main-action' });
-    const mainContinueButton = createElement('button', {
-      className: 'btn btn-primary',
-      onClick: () => this.handleContinue()
-    });
-    mainContinueButton.textContent = 'ДАЛЕЕ';
-    mainButtonContainer.appendChild(mainContinueButton);
-    content.appendChild(mainButtonContainer);
-
     // Instruction text
     const instruction = createElement('p', { className: 'photos-ready-instruction' });
     instruction.textContent = 'Если хотите посмотреть или заменить фото, нажмите на превью';
