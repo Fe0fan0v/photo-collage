@@ -44,7 +44,8 @@ photo-collage/
 │   │   ├── emailjs.js        # Отправка email через backend SMTP
 │   │   └── google-sheets.js  # (устарело, теперь через backend)
 │   ├── utils/
-│   │   └── helpers.js
+│   │   ├── helpers.js
+│   │   └── session-persistence.js  # Сохранение/восстановление состояния в sessionStorage
 │   └── assets/
 │       ├── background-pattern.png     # Фоновый паттерн "ёлочка" (200x200)
 │       ├── logo.png                   # Логотип SELETTI × DELIGHT
@@ -285,6 +286,57 @@ sudo certbot certificates
 2. **Обработка времени** - удаление фона через rembg занимает 10-30 секунд на фото
 3. **Первый запуск backend** - скачивание модели MediaPipe (~5MB) при первом запуске
 4. **OOM Kill** - при высокой нагрузке (несколько одновременных обработок фото) backend может быть убит OOM killer (сервер 3.8 GB RAM)
+
+---
+
+## Изменения (2026-02-15 ночь)
+
+### Исправление 6 багов мобильного использования
+
+#### 1-2. Превью фото на камере → photo-review вместо file picker
+- **`src/screens/camera.js`**: клик по thumbnail теперь через `handleThumbnailClick()`
+  - Фото есть → навигация на экран photo-review
+  - Фото нет → открывается file picker (как раньше)
+- Ранее клик по превью ВСЕГДА открывал файловый диалог
+
+#### 3. Photos-ready: клик по фото не работал на мобильных
+- **`src/styles/main.css`**: на `.photo-ready-image` добавлены `-webkit-touch-callout: none`, `user-select: none`, `pointer-events: none`
+- **`src/screens/photos-ready.js`**: `draggable: 'false'` на обоих `<img>`
+- Мобильные браузеры перехватывали клик по `<img>` (контекстное меню "сохранить изображение"), теперь клик проходит через родительский `.photo-ready-card`
+
+#### 4. Потеря прогресса при блокировке телефона (session persistence)
+- **Создан `src/utils/session-persistence.js`**:
+  - `saveSession(screenName, state)` — сериализует фото в base64, сохраняет в `sessionStorage`
+  - `restoreSession()` — восстанавливает состояние из `sessionStorage`
+  - `clearSession()` — очищает `sessionStorage`
+  - Экраны `processing`, `success`, `final` не восстанавливаются — fallback на `photosReady`/`camera`
+  - Фото хранятся как base64 data URL (~100-300KB каждое, лимит sessionStorage 5MB)
+- **`src/main.js`**:
+  - `init()`: проверяет сохранённое состояние и восстанавливает при перезагрузке
+  - `navigateTo()`: сохраняет состояние после каждого перехода
+  - `reset()`: очищает sessionStorage
+
+#### 5. Google Sheets не получает данные
+- Нужно расшарить таблицу для `collage-service@seletti-hybrid.iam.gserviceaccount.com` как **Редактор**
+- Ручное действие в интерфейсе Google Sheets
+
+#### 6. Явное московское время в backend
+- **`backend/main.py`**: `from zoneinfo import ZoneInfo`
+- Все `datetime.now()` заменены на `datetime.now(ZoneInfo('Europe/Moscow'))`
+- Затронуты: timestamp в имени файла и datetime_str для Google Sheets
+
+### Исправление сохранения второго email в Google Sheets
+
+#### Проблема
+- `/save-collage` получал только `email: email1` — в таблицу записывалась одна строка
+- Второй email из формы полностью игнорировался при записи в Sheets
+
+#### Исправление
+- **`backend/main.py`**: `/save-collage` принимает массив `recipients`
+  - Записывает отдельную строку для каждого получателя (один collage ID, одна дата, один URL)
+  - Обратная совместимость: если `recipients` нет, использует `email`/`customerType`
+- **`src/screens/email-form.js`**: передаёт `recipients` в `/save-collage`
+- **`src/screens/final.js`**: аналогично передаёт `recipients` в `/save-collage`
 
 ---
 
