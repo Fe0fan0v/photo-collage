@@ -273,16 +273,6 @@ export class FinalScreen {
 
     overlay.appendChild(actions);
 
-    // Website link
-    const website = createElement('a', {
-      className: 'tg-popup-website',
-      href: 'https://www.seletti.ru',
-      target: '_blank',
-      rel: 'noopener noreferrer'
-    });
-    website.textContent = 'www.seletti.ru';
-    overlay.appendChild(website);
-
     // "НАЧАТЬ СНАЧАЛА" button
     const restartBtn = createElement('button', {
       className: 'tg-popup-restart',
@@ -296,6 +286,16 @@ export class FinalScreen {
     });
     restartBtn.textContent = 'НАЧАТЬ СНАЧАЛА';
     overlay.appendChild(restartBtn);
+
+    // Website link (below all buttons)
+    const website = createElement('a', {
+      className: 'tg-popup-website',
+      href: 'https://www.seletti.ru',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    website.textContent = 'www.seletti.ru';
+    overlay.appendChild(website);
 
     document.querySelector('.screen-final').appendChild(overlay);
 
