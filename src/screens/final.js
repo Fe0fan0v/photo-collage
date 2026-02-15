@@ -108,12 +108,12 @@ export class FinalScreen {
     return screen;
   }
 
-  async handleSendEmail() {
-    await this.sendToEmails();
+  handleSendEmail() {
+    this.app.navigateTo('emailForm');
   }
 
-  async handlePrint() {
-    await this.sendToEmails();
+  handlePrint() {
+    this.app.navigateTo('emailForm');
   }
 
   _fetchWithTimeout(url, options, timeoutMs = 60000) {
