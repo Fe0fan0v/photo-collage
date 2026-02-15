@@ -272,10 +272,7 @@ export class FinalScreen {
       overlay.classList.add('visible');
     });
 
-    // Auto-close after 4 seconds
-    this._popupTimer = setTimeout(() => {
-      this.closePopup(overlay);
-    }, 4000);
+    // No auto-close — only manual close via yellow × button
   }
 
   closePopup(overlay) {
