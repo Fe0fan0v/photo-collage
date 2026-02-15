@@ -272,10 +272,10 @@ export class FinalScreen {
       overlay.classList.add('visible');
     });
 
-    // Auto-close after 2 seconds
+    // Auto-close after 4 seconds
     this._popupTimer = setTimeout(() => {
       this.closePopup(overlay);
-    }, 2000);
+    }, 4000);
   }
 
   closePopup(overlay) {
