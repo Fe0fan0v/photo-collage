@@ -239,14 +239,14 @@ function drawFaceHalves(ctx, faceImg1, face1, faceImg2, face2, centerX, centerY,
   const face2Info = getFacePixelCoords(faceImg2, face2);
 
   // Use inter-eye distance for scaling
-  // Target eye distance is ~24% of oval width - face size matches reference
-  const targetEyeDistance = radiusX * 2 * 0.24;
+  // Target eye distance is ~18% of oval width - smaller face, more plate visible
+  const targetEyeDistance = radiusX * 2 * 0.18;
 
   const scale1 = targetEyeDistance / face1Info.eyeDistance;
   const scale2 = targetEyeDistance / face2Info.eyeDistance;
 
-  // Target eye position: eyes should be at ~46% from top (chin reaches plate edge)
-  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.46);
+  // Target eye position: eyes at ~42% from top (more plate visible below chin)
+  const targetEyeY = centerY - radiusY + (radiusY * 2 * 0.42);
 
   // Draw face 1 (left half) - aligned by eyes
   drawAlignedFaceByEyes(ctx, faceImg1, face1Info, scale1, targetEyeY, centerX, centerY, radiusX, radiusY, 'left');
