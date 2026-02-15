@@ -76,28 +76,10 @@ export class PhotosReadyScreen {
 
     content.appendChild(photosGrid);
 
-    // Consent checkbox
-    const consentGroup = createElement('div', { className: 'consent-group' });
-    const consentLabel = createElement('label', { className: 'consent-label' });
-    const consentCheckbox = createElement('input', {
-      type: 'checkbox',
-      className: 'consent-checkbox',
-      onChange: (e) => {
-        bottomContinueButton.disabled = !e.target.checked;
-      }
-    });
-    consentLabel.appendChild(consentCheckbox);
-    const consentText = createElement('span', { className: 'consent-text' });
-    consentText.textContent = 'Даю согласие на обработку персональных данных';
-    consentLabel.appendChild(consentText);
-    consentGroup.appendChild(consentLabel);
-    content.appendChild(consentGroup);
-
-    // Bottom continue button (disabled until consent given)
+    // Bottom continue button
     const bottomButtonContainer = createElement('div', { className: 'photos-ready-bottom-action' });
     const bottomContinueButton = createElement('button', {
       className: 'btn btn-primary',
-      disabled: true,
       onClick: () => this.handleContinue()
     });
     bottomContinueButton.textContent = 'ДАЛЕЕ';

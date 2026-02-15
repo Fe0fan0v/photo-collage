@@ -131,10 +131,28 @@ export class EmailFormScreen {
     this.errorText = createElement('div', { className: 'form-error hidden' });
     content.appendChild(this.errorText);
 
-    // Submit button
+    // Consent checkbox
+    const consentGroup = createElement('div', { className: 'consent-group' });
+    const consentLabel = createElement('label', { className: 'consent-label' });
+    const consentCheckbox = createElement('input', {
+      type: 'checkbox',
+      className: 'consent-checkbox',
+      onChange: (e) => {
+        this.submitButton.disabled = !e.target.checked;
+      }
+    });
+    consentLabel.appendChild(consentCheckbox);
+    const consentText = createElement('span', { className: 'consent-text' });
+    consentText.innerHTML = 'Даю согласие на <a href="https://www.de-light.ru/showcase/terms/" target="_blank" rel="noopener noreferrer" class="consent-link">обработку персональных данных</a>';
+    consentLabel.appendChild(consentText);
+    consentGroup.appendChild(consentLabel);
+    content.appendChild(consentGroup);
+
+    // Submit button (disabled until consent given)
     const submitContainer = createElement('div', { className: 'email-form-actions' });
     this.submitButton = createElement('button', {
       className: 'btn btn-primary',
+      disabled: true,
       onClick: () => this.handleSubmit()
     });
     this.submitButton.textContent = 'ОТПРАВИТЬ';
