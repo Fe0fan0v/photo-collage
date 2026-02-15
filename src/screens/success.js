@@ -41,16 +41,6 @@ export class SuccessScreen {
       content.appendChild(preview);
     }
 
-    // Website link
-    const websiteLink = createElement('a', {
-      className: 'success-website-link',
-      href: 'https://seletti.ru',
-      target: '_blank',
-      rel: 'noopener noreferrer'
-    });
-    websiteLink.textContent = 'seletti.ru';
-    content.appendChild(websiteLink);
-
     // Confirmation message (hidden by default, shown after email sent)
     this.confirmationMessage = createElement('div', { className: 'success-confirmation hidden' });
     this.confirmationMessage.textContent = 'Готово!';
@@ -84,6 +74,16 @@ export class SuccessScreen {
     actions.appendChild(restartButton);
 
     content.appendChild(actions);
+
+    // Website link (below all buttons)
+    const websiteLink = createElement('a', {
+      className: 'success-website-link',
+      href: 'https://seletti.ru',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    websiteLink.textContent = 'seletti.ru';
+    content.appendChild(websiteLink);
     screen.appendChild(content);
 
     return screen;
