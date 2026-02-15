@@ -423,31 +423,42 @@ sudo certbot certificates
 - Первоначально popup имел тёмную карточку с border-radius
 - Позже переделано: элементы прямо на overlay без карточки, жёлтая кнопка закрытия, кнопка "НАЧАТЬ СНАЧАЛА"
 
-### Исправление Google Services
+### Миграция Google Services на новый аккаунт (2026-02-15)
 
-#### Проблема 1: Invalid private key
-- `credentials.json` на сервере содержал повреждённый ключ (1217 байт вместо 1218+)
-- **Решение**: сгенерирован новый ключ через `gcloud iam service-accounts keys create`
+#### Причина миграции
+- Старый SA `collage-service@seletti-collage` перестал работать (ошибка "account not found")
+- Старый аккаунт `ok.lena.kazah@gmail.com` больше не доступен
 
-#### Проблема 2: Service Account storage quota
-- Google убрал storage quota для Service Accounts на бесплатных Gmail аккаунтах
-- Ошибка: `Service Accounts do not have storage quota`
-- **Решение**: разделение credentials:
-  - **Google Sheets** → Service Account (`credentials.json`) — работает
-  - **Google Drive** → OAuth2 user token (`oauth_token.json`) от ok.lena.kazah@gmail.com
-  - `with_quota_project('seletti-collage')` для корректной тарификации API
+#### Новый Google Cloud проект
+- **Проект**: `seletti-hybrid`
+- **Аккаунт**: `goover1408@gmail.com`
+- **Service Account**: `collage-service@seletti-hybrid.iam.gserviceaccount.com`
+- **Включённые API**: Google Sheets API, Google Drive API, IAM API
+
+#### Новые ресурсы
+- **Google Sheets**: `1J6J-07kADP4k93VznIlYSdELk48kziMVOxaLWqQQfTo` ("Seletti Hybrid - Collages")
+  - Столбцы: Collage ID | Date/Time | Email | Customer Type | Collage URL
+  - Доступ: goover1408@gmail.com (владелец), SA (редактор)
+- **Google Drive папка**: `1pBBYQDLfgOJFxcbKmfrs8ad2aX9Kqpno` ("Seletti Hybrid Collages")
+  - Публичный доступ по ссылке (читатель)
+  - Доступ: goover1408@gmail.com (владелец)
+
+#### Архитектура credentials
+- **Google Sheets** → Service Account (`credentials_goover.json`)
+- **Google Drive** → OAuth2 user token (`oauth_token_goover.json`) от goover1408@gmail.com
+- `with_quota_project('seletti-hybrid')` для корректной тарификации API
 
 #### Файлы credentials на сервере
-- `/home/admin/photo-collage/backend/credentials.json` — Service Account (для Sheets)
-- `/home/admin/photo-collage/backend/oauth_token.json` — OAuth2 refresh token (для Drive)
+- `/home/admin/photo-collage/backend/credentials_goover.json` — Service Account (для Sheets)
+- `/home/admin/photo-collage/backend/oauth_token_goover.json` — OAuth2 refresh token (для Drive)
 
 #### Обновление OAuth токена
 Если токен протухнет, запустить локально:
 ```bash
 cd backend && python get_oauth_token.py
-# Откроется браузер для авторизации
+# Откроется браузер для авторизации (goover1408@gmail.com)
 # Загрузить на сервер:
-B64=$(base64 -w0 oauth_token.json) && ssh admin@158.160.141.83 "echo '$B64' | base64 -d > /home/admin/photo-collage/backend/oauth_token.json"
+B64=$(base64 -w0 oauth_token.json) && ssh admin@158.160.141.83 "echo '$B64' | base64 -d > /home/admin/photo-collage/backend/oauth_token_goover.json"
 sudo systemctl restart collage-backend
 ```
 
@@ -480,9 +491,10 @@ SMTP_FROM=hello@seletti.ru
 SMTP_FROM_NAME=Seletti Russia
 SMTP_USE_TLS=false
 MANAGER_EMAIL=hybrid@de-light.ru
-GOOGLE_CREDENTIALS_PATH=credentials.json
-GOOGLE_SHEETS_ID=1dxStIaJgkqgea1IhC4IM6_Ih6Jj-v6YCC2GRDkt-3VU
-GOOGLE_DRIVE_FOLDER_ID=1hUav6hoIpVr4fR4b6xIpKQ3O4hKl3Axw
+GOOGLE_CREDENTIALS_PATH=credentials_goover.json
+GOOGLE_SHEETS_ID=1J6J-07kADP4k93VznIlYSdELk48kziMVOxaLWqQQfTo
+GOOGLE_DRIVE_FOLDER_ID=1pBBYQDLfgOJFxcbKmfrs8ad2aX9Kqpno
+GOOGLE_OAUTH_TOKEN_PATH=oauth_token_goover.json
 PUBLIC_URL=https://seletti-hybrid.de-light.ru
 ```
 
@@ -549,25 +561,26 @@ PUBLIC_URL=https://seletti-hybrid.de-light.ru
 ### Настройка Google Cloud + Drive + Sheets
 
 #### Google Cloud проект
-- **Проект**: `seletti-collage` (Google Cloud Console)
-- **Service Account**: `collage-service@seletti-collage.iam.gserviceaccount.com`
+- **Проект**: `seletti-hybrid` (Google Cloud Console)
+- **Аккаунт**: `goover1408@gmail.com`
+- **Service Account**: `collage-service@seletti-hybrid.iam.gserviceaccount.com`
 - **Включённые API**: Google Sheets API, Google Drive API, IAM API
-- **Ключ**: `backend/credentials.json` (не коммитится в репозиторий)
+- **SA ключ**: `backend/credentials_goover.json` (не коммитится в репозиторий)
+- **OAuth токен**: `backend/oauth_token_goover.json` (не коммитится в репозиторий)
 
 #### Google Sheets
-- **Таблица**: "Seletti Collages Database"
-- **GOOGLE_SHEETS_ID**: `1dxStIaJgkqgea1IhC4IM6_Ih6Jj-v6YCC2GRDkt-3VU`
-- **Лист**: "Коллажи"
-- **Столбцы**: ID | Дата и время | Email | Тип клиента | Ссылка на коллаж
-- **Форматирование**: жирные заголовки, ширина столбцов, закреплённая первая строка
-- **Валидация**: выпадающий список типов клиентов (Частный покупатель, Дизайнер, Дилер, Поставщик)
-- **Доступ**: Service Account (редактор), аккаунт ok.lena.kazah@gmail.com (владелец)
+- **Таблица**: "Seletti Hybrid - Collages"
+- **GOOGLE_SHEETS_ID**: `1J6J-07kADP4k93VznIlYSdELk48kziMVOxaLWqQQfTo`
+- **Лист**: "Collages"
+- **Столбцы**: Collage ID | Date/Time | Email | Customer Type | Collage URL
+- **Закреплённая первая строка** (заголовки)
+- **Доступ**: goover1408@gmail.com (владелец), Service Account (редактор)
 
 #### Google Drive
-- **Папка**: "Seletti Collages"
-- **GOOGLE_DRIVE_FOLDER_ID**: `1hUav6hoIpVr4fR4b6xIpKQ3O4hKl3Axw`
-- **Доступ**: Service Account (редактор), публичный доступ по ссылке (читатель)
-- Коллажи загружаются как PNG с публичными ссылками
+- **Папка**: "Seletti Hybrid Collages"
+- **GOOGLE_DRIVE_FOLDER_ID**: `1pBBYQDLfgOJFxcbKmfrs8ad2aX9Kqpno`
+- **Доступ**: goover1408@gmail.com (владелец), публичный доступ по ссылке (читатель)
+- Коллажи загружаются через OAuth2 user token (SA не имеет storage quota на бесплатных аккаунтах)
 
 #### Скрипты автоматизации (локальные)
 - **`backend/setup_google_cloud.bat`** — создание проекта, API, Service Account через gcloud CLI
