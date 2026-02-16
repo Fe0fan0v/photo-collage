@@ -226,45 +226,43 @@ export class EmailFormScreen {
         recipients.push({ email: email2, customerType: customerType2 });
       }
 
-      // Run save-collage and send-email in parallel (save-collage is optional)
-      const savePromise = this._fetchWithTimeout(`${API_URL}/save-collage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image: collageDataUrl,
-          email: email1,
-          customerType: customerType1,
-          recipients
-        })
-      }, 90000).then(async (res) => {
-        if (res.ok) {
-          const result = await res.json();
+      // First save collage to get ID, URL, datetime for manager notification
+      let collageInfo = null;
+      try {
+        const saveRes = await this._fetchWithTimeout(`${API_URL}/save-collage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: collageDataUrl,
+            email: email1,
+            customerType: customerType1,
+            recipients
+          })
+        }, 90000);
+        if (saveRes.ok) {
+          const result = await saveRes.json();
           if (result.success) {
-            return {
+            collageInfo = {
               collageId: result.collageId,
               url: result.url,
               datetime: new Date().toLocaleString('ru-RU')
             };
           }
         }
-        return null;
-      }).catch((err) => {
+      } catch (err) {
         console.error('Failed to save collage:', err);
-        return null;
-      });
+      }
 
-      const emailBody = JSON.stringify({
-        image: collageDataUrl,
-        recipients
-      });
-
-      const emailPromise = this._fetchWithTimeout(`${API_URL}/send-email`, {
+      // Then send email with collageInfo so manager gets full details
+      const emailResponse = await this._fetchWithTimeout(`${API_URL}/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: emailBody
+        body: JSON.stringify({
+          image: collageDataUrl,
+          recipients,
+          collageInfo
+        })
       }, 90000);
-
-      const [collageInfo, emailResponse] = await Promise.all([savePromise, emailPromise]);
 
       const emailData = await emailResponse.json();
       if (!emailData.success) {
