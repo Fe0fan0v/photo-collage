@@ -280,27 +280,17 @@ export class CameraScreen {
   }
 
   handleThumbnailClick(photoIndex) {
-    const photos = this.app.getPhotos();
-    if (photos[photoIndex]) {
-      // Photo exists — go to review screen
-      this.app.navigateTo('photoReview', { photoIndex });
-    } else {
-      // No photo yet — open file picker
-      this.handlePhotoUpload(photoIndex);
-    }
-  }
-
-  handlePhotoUpload(photoIndex) {
+    // Always open file picker (review is accessible from photos-ready screen)
     if (photoIndex === 0) {
       this.fileInput1.click();
     } else if (photoIndex === 1) {
-      // Allow upload if photo 1 already exists
       const photos = this.app.getPhotos();
       if (photos.length >= 1) {
         this.fileInput2.click();
       }
     }
   }
+
 
   async processPhoto1ForPreview(photoBlob) {
     // Process photo 1 in background (for later use in collage)
