@@ -280,12 +280,18 @@ export class CameraScreen {
   }
 
   handleThumbnailClick(photoIndex) {
-    // Always open file picker (review is accessible from photos-ready screen)
+    const photos = this.app.getPhotos();
+
     if (photoIndex === 0) {
-      this.fileInput1.click();
+      if (photos.length > 0) {
+        this.app.navigateTo('photoReview', { photoIndex: 0 });
+      } else {
+        this.fileInput1.click();
+      }
     } else if (photoIndex === 1) {
-      const photos = this.app.getPhotos();
-      if (photos.length >= 1) {
+      if (photos.length >= 2) {
+        this.app.navigateTo('photoReview', { photoIndex: 1 });
+      } else if (photos.length >= 1) {
         this.fileInput2.click();
       }
     }
