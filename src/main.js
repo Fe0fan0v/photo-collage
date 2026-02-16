@@ -110,8 +110,10 @@ class App {
    * @param {number} photoIndex - Index of photo to retake (0 or 1)
    */
   retakePhoto(photoIndex) {
-    // Remove photos from the index onwards
-    this.state.photos = this.state.photos.slice(0, photoIndex);
+    // Remove only the specific photo, keep the other one
+    if (photoIndex < this.state.photos.length) {
+      this.state.photos[photoIndex] = null;
+    }
     // Navigate to camera with photo index
     this.navigateTo('camera', { startPhotoIndex: photoIndex });
   }

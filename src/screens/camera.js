@@ -172,9 +172,9 @@ export class CameraScreen {
   restoreExistingPhotos() {
     const photos = this.app.getPhotos();
 
-    // Restore photo 1 if it exists
-    if (photos.length > 0) {
-      // Sync currentPhotoIndex with actual state
+    // Restore photo 1 if it exists (not null)
+    if (photos[0]) {
+      // Auto-advance to photo 2 only if not explicitly retaking photo 1
       if (this.currentPhotoIndex === 0) {
         this.currentPhotoIndex = 1;
       }
@@ -189,6 +189,12 @@ export class CameraScreen {
       }).catch(error => {
         console.error('Failed to process photo 1 for preview:', error);
       });
+    }
+
+    // Restore photo 2 thumbnail if it exists
+    if (photos[1]) {
+      const photo2DataUrl = URL.createObjectURL(photos[1]);
+      this.updateThumbnail(this.photo2Thumbnail, photo2DataUrl);
     }
 
     // Update half overlay position based on current photo
@@ -232,28 +238,32 @@ export class CameraScreen {
     try {
       const photoBlob = await captureVideoFrame(this.videoElement);
       const photoDataUrl = await blobToBase64(photoBlob);
+      const photos = this.app.getPhotos();
 
-      // Add photo to app state
-      this.app.addPhoto(photoBlob);
+      // Set photo at current index (works for both new and retake)
+      photos[this.currentPhotoIndex] = photoBlob;
 
       // Show success animation
       this.showSuccessAnimation();
 
       if (this.currentPhotoIndex === 0) {
-        // First photo captured - stay on camera, update for photo 2
+        // First photo captured
         this.photo1DataUrl = photoDataUrl;
         this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
 
         // Process photo 1 in background for preview
         this.processPhoto1ForPreview(photoBlob);
 
-        // Move to photo 2
-        this.currentPhotoIndex = 1;
-        this.updateHalfOverlay();
+        // If photo 2 already exists (retake scenario), go to photos ready
+        if (photos[1]) {
+          this.app.navigateTo('photosReady');
+        } else {
+          this.currentPhotoIndex = 1;
+          this.updateHalfOverlay();
+        }
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
-        // Navigate to photos ready screen
         this.app.navigateTo('photosReady');
       }
     } catch (error) {
@@ -288,15 +298,15 @@ export class CameraScreen {
     const photos = this.app.getPhotos();
 
     if (photoIndex === 0) {
-      if (photos.length > 0) {
+      if (photos[0]) {
         this.app.navigateTo('photoReview', { photoIndex: 0 });
       } else {
         this.fileInput1.click();
       }
     } else if (photoIndex === 1) {
-      if (photos.length >= 2) {
+      if (photos[1]) {
         this.app.navigateTo('photoReview', { photoIndex: 1 });
-      } else if (photos.length >= 1) {
+      } else if (photos[0]) {
         this.fileInput2.click();
       }
     }
@@ -323,33 +333,29 @@ export class CameraScreen {
       const photoDataUrl = URL.createObjectURL(blob);
       const photos = this.app.getPhotos();
 
+      // Set photo at the specified index
+      photos[photoIndex] = blob;
+
       if (photoIndex === 0) {
-        // Upload/replace photo 1
-        if (photos.length === 0) {
-          this.app.addPhoto(blob);
-        } else {
-          photos[0] = blob;
-        }
         this.photo1DataUrl = photoDataUrl;
         this.updateThumbnail(this.photo1Thumbnail, photoDataUrl);
 
-        // If we were on photo 1, advance to photo 2
         if (this.currentPhotoIndex === 0) {
           this.showSuccessAnimation();
           this.processPhoto1ForPreview(blob);
-          this.currentPhotoIndex = 1;
-          this.updateHalfOverlay();
+
+          // If photo 2 already exists (retake scenario), go to photos ready
+          if (photos[1]) {
+            this.app.navigateTo('photosReady');
+          } else {
+            this.currentPhotoIndex = 1;
+            this.updateHalfOverlay();
+          }
         } else {
           // Re-process photo 1 preview
           this.processPhoto1ForPreview(blob);
         }
       } else if (photoIndex === 1) {
-        // Upload/replace photo 2
-        if (photos.length < 2) {
-          this.app.addPhoto(blob);
-        } else {
-          photos[1] = blob;
-        }
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
         // Navigate to photos ready
         this.app.navigateTo('photosReady');
