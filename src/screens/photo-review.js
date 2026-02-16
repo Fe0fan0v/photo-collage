@@ -4,7 +4,6 @@
  */
 
 import { createElement } from '../utils/helpers.js';
-import { processFace } from '../services/background-removal.js';
 import logoUrl from '../assets/logo.png';
 
 export class PhotoReviewScreen {
@@ -88,48 +87,52 @@ export class PhotoReviewScreen {
 
     screen.appendChild(photoContainer);
 
-    // Controls
+    // Controls: [photo1 thumb] [yellow circle] [photo2 thumb]
     const controls = createElement('div', { className: 'photo-review-controls' });
 
-    // Preview thumbnail (clickable for gallery)
-    this.previewThumbnail = createElement('div', {
+    // Photo 1 thumbnail
+    this.thumb1 = createElement('div', {
       className: 'photo-review-preview clickable',
-      onClick: () => this.handleGallerySelect()
+      onClick: () => this.handleThumbClick(0)
     });
-
-    if (photo) {
-      const previewImg = createElement('img', {
+    if (photos[0]) {
+      const img1 = createElement('img', {
         className: 'photo-review-preview-image',
-        src: URL.createObjectURL(photo),
-        alt: 'Preview'
+        src: URL.createObjectURL(photos[0]),
+        alt: 'Фото 1'
       });
-      this.previewThumbnail.appendChild(previewImg);
+      this.thumb1.appendChild(img1);
     }
-
-    controls.appendChild(this.previewThumbnail);
+    controls.appendChild(this.thumb1);
 
     // Yellow circle (decorative)
     const yellowCircle = createElement('div', { className: 'photo-review-circle' });
     controls.appendChild(yellowCircle);
 
-    // Continue button
+    // Photo 2 thumbnail
+    this.thumb2 = createElement('div', {
+      className: 'photo-review-preview clickable',
+      onClick: () => this.handleThumbClick(1)
+    });
+    if (photos[1]) {
+      const img2 = createElement('img', {
+        className: 'photo-review-preview-image',
+        src: URL.createObjectURL(photos[1]),
+        alt: 'Фото 2'
+      });
+      this.thumb2.appendChild(img2);
+    }
+    controls.appendChild(this.thumb2);
+
+    screen.appendChild(controls);
+
+    // Continue button (below thumbnails)
     const continueButton = createElement('button', {
       className: 'btn btn-primary btn-photo-review-continue',
       onClick: () => this.handleContinue()
     });
     continueButton.textContent = 'ДАЛЕЕ';
-    controls.appendChild(continueButton);
-
-    screen.appendChild(controls);
-
-    // Hidden file input for gallery
-    this.fileInput = createElement('input', {
-      type: 'file',
-      accept: 'image/*',
-      style: { display: 'none' },
-      onChange: (e) => this.handleFileSelect(e)
-    });
-    screen.appendChild(this.fileInput);
+    screen.appendChild(continueButton);
 
     return screen;
   }
@@ -139,44 +142,50 @@ export class PhotoReviewScreen {
     this.app.retakePhoto(this.photoIndex);
   }
 
-  handleGallerySelect() {
-    // Open file picker
-    this.fileInput.click();
+  handleThumbClick(thumbIndex) {
+    // Clicking the thumbnail of the photo being reviewed opens file picker to replace it
+    if (thumbIndex === this.photoIndex) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.style.display = 'none';
+      input.addEventListener('change', (e) => {
+        this.handleFileSelect(e, thumbIndex);
+        input.remove();
+      });
+      document.body.appendChild(input);
+      input.click();
+    }
   }
 
-  async handleFileSelect(event) {
+  async handleFileSelect(event, targetIndex) {
     const file = event.target.files[0];
     if (!file) return;
 
     try {
-      // Convert file to blob
       const blob = new Blob([await file.arrayBuffer()], { type: file.type });
+      const photoUrl = URL.createObjectURL(blob);
 
       // Replace photo in app state
       const photos = this.app.getPhotos();
-      photos[this.photoIndex] = blob;
+      photos[targetIndex] = blob;
 
-      // Update preview
-      const photoUrl = URL.createObjectURL(blob);
-
-      // Update main photo
-      if (this.photoElement) {
+      // Update main photo if replacing the currently viewed photo
+      if (targetIndex === this.photoIndex && this.photoElement) {
         this.photoElement.src = photoUrl;
       }
 
-      // Update thumbnail
-      if (this.previewThumbnail) {
-        this.previewThumbnail.innerHTML = '';
+      // Update the corresponding thumbnail
+      const thumb = targetIndex === 0 ? this.thumb1 : this.thumb2;
+      if (thumb) {
+        thumb.innerHTML = '';
         const previewImg = createElement('img', {
           className: 'photo-review-preview-image',
           src: photoUrl,
-          alt: 'Preview'
+          alt: `Фото ${targetIndex + 1}`
         });
-        this.previewThumbnail.appendChild(previewImg);
+        thumb.appendChild(previewImg);
       }
-
-      // Reset file input
-      event.target.value = '';
     } catch (error) {
       console.error('Error selecting photo from gallery:', error);
     }
