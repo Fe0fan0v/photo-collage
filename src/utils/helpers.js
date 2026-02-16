@@ -75,7 +75,7 @@ export async function captureVideoFrame(video) {
   ctx.drawImage(video, 0, 0);
 
   return new Promise((resolve) => {
-    canvas.toBlob(resolve, 'image/jpeg', 0.9);
+    canvas.toBlob(resolve, 'image/png');
   });
 }
 

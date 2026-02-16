@@ -134,7 +134,7 @@ export async function createCollage(photo1, photo2, plateIndex, onProgress = () 
   onProgress(100);
 
   // Return full canvas - faces are already clipped to plate edge
-  return canvas.toDataURL('image/jpeg', 0.92);
+  return canvas.toDataURL('image/png');
 }
 
 /**
