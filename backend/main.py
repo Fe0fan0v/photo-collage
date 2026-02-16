@@ -315,20 +315,21 @@ async def save_collage(data: dict = Body(...)):
             # Format datetime for Russian locale (Moscow timezone)
             datetime_str = datetime.now(ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M:%S')
 
-            for r in recipients:
-                r_email = r.get('email', '')
-                r_type = r.get('customerType', '')
-                if not r_email:
-                    continue
-                success = google_services.append_to_sheet({
-                    'collage_id': collage_id,
-                    'datetime': datetime_str,
-                    'email': r_email,
-                    'customer_type': r_type,
-                    'collage_url': public_url
-                })
-                if not success:
-                    print(f"Warning: Failed to save {r_email} to Google Sheets")
+            # One row per collage session — combine all recipients
+            emails_list = [r.get('email', '') for r in recipients if r.get('email')]
+            types_list = [r.get('customerType', '') for r in recipients if r.get('email')]
+            emails_str = ', '.join(emails_list)
+            types_str = ', '.join(types_list)
+
+            success = google_services.append_to_sheet({
+                'collage_id': collage_id,
+                'datetime': datetime_str,
+                'email': emails_str,
+                'customer_type': types_str,
+                'collage_url': public_url
+            })
+            if not success:
+                print(f"Warning: Failed to save to Google Sheets")
 
         return JSONResponse({
             "success": True,

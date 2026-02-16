@@ -38,17 +38,48 @@ class EmailService:
         msg = MIMEMultipart('mixed')
         msg['From'] = f"{self.from_name} <{self.from_addr}>"
         msg['To'] = to_email
-        msg['Subject'] = 'Ваш гибрид от Seletti'
+        msg['Subject'] = 'Ваш Seletti Hybrid'
+
+        homepage_url = 'http://seletti.ru?utm_source=hybridpic&utm_medium=email&utm_campaign=hybappseletti'
+        seletti_url = 'http://seletti.ru?utm_source=hybridpic&utm_medium=email&utm_campaign=hybappseletti'
 
         # HTML body
         html = f"""\
 <html>
-<body style="font-family: Arial, sans-serif; color: #333;">
-  <h2>Спасибо за участие!</h2>
-  <p>Ваш уникальный гибрид от <strong>Seletti</strong> готов.</p>
-  <p>Изображение прикреплено к этому письму.</p>
-  <br>
-  <p style="color: #888; font-size: 12px;">Seletti Russia</p>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #000000;">
+          <tr>
+            <td align="center" style="padding: 20px; background-color: #f0f0f0;">
+              <a href="{homepage_url}" target="_blank" style="text-decoration: none; color: #000000; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; letter-spacing: 3px;">SELETTI &times; DELIGHT</a>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 40px 30px 16px 30px;">
+              <h2 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: bold;">Ваш Seletti Hybrid</h2>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 0 30px 24px 30px;">
+              <p style="margin: 0; color: #cccccc; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6;">Ваш уникальный гибрид готов. Изображение прикреплено к этому письму.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 0 30px 40px 30px;">
+              <p style="margin: 0; color: #cccccc; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6;">Все коллекции на официальном сайте <a href="{seletti_url}" target="_blank" style="color: #FFED00; text-decoration: none;">seletti.ru</a></p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 20px 30px; border-top: 1px solid #333333;">
+              <p style="margin: 0; color: #666666; font-family: Arial, Helvetica, sans-serif; font-size: 11px;">Seletti Russia</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""
         msg.attach(MIMEText(html, 'html', 'utf-8'))
