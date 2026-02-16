@@ -1323,6 +1323,7 @@ p {
   min-height: auto;
   min-width: auto;
   font-size: 1rem;
+  align-self: center;
 }
 
 /* Desktop photo review */
