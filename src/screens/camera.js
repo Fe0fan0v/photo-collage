@@ -108,23 +108,6 @@ export class CameraScreen {
     this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
     controls.appendChild(this.photo1Thumbnail);
 
-    // Hidden file inputs for gallery selection
-    this.fileInput1 = createElement('input', {
-      type: 'file',
-      accept: 'image/*',
-      style: { display: 'none' },
-      onChange: (e) => this.handleGallerySelect(e, 0)
-    });
-    screen.appendChild(this.fileInput1);
-
-    this.fileInput2 = createElement('input', {
-      type: 'file',
-      accept: 'image/*',
-      style: { display: 'none' },
-      onChange: (e) => this.handleGallerySelect(e, 1)
-    });
-    screen.appendChild(this.fileInput2);
-
     // Capture button
     const captureButton = createElement('button', {
       className: 'btn btn-capture',
@@ -301,15 +284,28 @@ export class CameraScreen {
       if (photos[0]) {
         this.app.navigateTo('photoReview', { photoIndex: 0 });
       } else {
-        this.fileInput1.click();
+        this.openFilePicker(0);
       }
     } else if (photoIndex === 1) {
       if (photos[1]) {
         this.app.navigateTo('photoReview', { photoIndex: 1 });
       } else if (photos[0]) {
-        this.fileInput2.click();
+        this.openFilePicker(1);
       }
     }
+  }
+
+  openFilePicker(photoIndex) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    input.addEventListener('change', (e) => {
+      this.handleGallerySelect(e, photoIndex);
+      input.remove();
+    });
+    document.body.appendChild(input);
+    input.click();
   }
 
 
