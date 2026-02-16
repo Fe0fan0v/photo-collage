@@ -208,10 +208,15 @@ export class CameraScreen {
     this.stream = await navigator.mediaDevices.getUserMedia(constraints);
     this.videoElement.srcObject = this.stream;
 
-    // Wait for video to be ready
-    await new Promise((resolve) => {
-      this.videoElement.onloadedmetadata = resolve;
-    });
+    // Wait for video to be ready (handle re-mount where metadata may already be available)
+    if (this.videoElement.readyState < 1) {
+      await new Promise((resolve) => {
+        this.videoElement.onloadedmetadata = resolve;
+      });
+    }
+
+    // Explicitly play — autoplay attribute may not work on re-mount (mobile browsers)
+    await this.videoElement.play();
   }
 
   stopCamera() {
