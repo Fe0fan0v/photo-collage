@@ -173,7 +173,12 @@ export class CameraScreen {
     const photos = this.app.getPhotos();
 
     // Restore photo 1 if it exists
-    if (photos.length > 0 && this.currentPhotoIndex >= 1) {
+    if (photos.length > 0) {
+      // Sync currentPhotoIndex with actual state
+      if (this.currentPhotoIndex === 0) {
+        this.currentPhotoIndex = 1;
+      }
+
       const photo1DataUrl = URL.createObjectURL(photos[0]);
       this.photo1DataUrl = photo1DataUrl;
       this.updateThumbnail(this.photo1Thumbnail, photo1DataUrl);
@@ -288,8 +293,12 @@ export class CameraScreen {
   handlePhotoUpload(photoIndex) {
     if (photoIndex === 0) {
       this.fileInput1.click();
-    } else if (photoIndex === 1 && this.currentPhotoIndex >= 1) {
-      this.fileInput2.click();
+    } else if (photoIndex === 1) {
+      // Allow upload if photo 1 already exists
+      const photos = this.app.getPhotos();
+      if (photos.length >= 1) {
+        this.fileInput2.click();
+      }
     }
   }
 
