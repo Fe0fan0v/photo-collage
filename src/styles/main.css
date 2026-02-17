@@ -1148,21 +1148,19 @@ p {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 16px;
+  padding: 20px 16px;
   align-items: center;
 }
 
 .photo-review-wrapper {
   position: relative;
   width: 100%;
-  flex: 1;
-  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  max-width: 400px;
+  aspect-ratio: 3/4;
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
   background: #000000;
-  margin-bottom: 0;
-  min-height: 200px;
-  max-height: calc(100vh - 420px);
-  max-height: calc(100dvh - 420px);
+  margin-bottom: 10px;
 }
 
 .photo-review-image {
@@ -1197,8 +1195,8 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 55%;
-  height: 75%;
+  width: 60%;
+  height: 70%;
   border: 5px dashed rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   z-index: 5;
@@ -1210,8 +1208,8 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 55%;
-  height: 75%;
+  width: 60%;
+  height: 70%;
   border-radius: 50%;
   overflow: hidden;
   pointer-events: none;
@@ -1337,8 +1335,7 @@ p {
   }
 
   .photo-review-wrapper {
-    max-height: 600px;
-    aspect-ratio: 4 / 3;
+    max-width: 500px;
   }
 
   .photo-review-controls {
