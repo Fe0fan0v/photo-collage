@@ -33,7 +33,7 @@ export class EmailFormScreen {
 
     // Logo header (gray background)
     const header = createElement('div', { className: 'logo-header' });
-    const logoLink = createElement('a', { href: 'http://seletti.ru', target: '_blank' });
+    const logoLink = createElement('a', { href: 'http://seletti.ru?utm_source=hybridpic&utm_medium=refferal&utm_campaign=hybappseletti', target: '_blank' });
     const logo = createElement('img', {
       className: 'logo-image',
       src: logoUrl,
