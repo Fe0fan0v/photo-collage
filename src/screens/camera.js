@@ -291,7 +291,7 @@ export class CameraScreen {
     } else if (photoIndex === 1) {
       if (photos[1]) {
         this.app.navigateTo('photoReview', { photoIndex: 1 });
-      } else if (photos[0]) {
+      } else {
         this.openFilePicker(1);
       }
     }
