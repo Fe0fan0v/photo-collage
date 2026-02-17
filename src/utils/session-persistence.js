@@ -110,10 +110,13 @@ export async function restoreSession() {
     const meta = JSON.parse(raw);
     if (!meta.screen) return null;
 
-    // Don't restore to transient screens
-    const transientScreens = ['processing', 'success', 'final'];
+    // Don't restore to processing screen (it requires active work)
     let screen = meta.screen;
-    if (transientScreens.includes(screen)) {
+    if (screen === 'processing') {
+      screen = meta.hasCollage ? 'final' : 'photosReady';
+    }
+    // Restore success/final only if collage exists, otherwise fall back
+    if ((screen === 'success' || screen === 'final') && !meta.hasCollage) {
       screen = 'photosReady';
     }
 
