@@ -2073,9 +2073,9 @@ p {
   border: none;
   border-radius: 50%;
   color: var(--text-dark);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  line-height: 40px;
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2083,7 +2083,6 @@ p {
   z-index: 101;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
   padding: 0;
-  padding-bottom: 2px;
   transition: all var(--transition);
 }
 
