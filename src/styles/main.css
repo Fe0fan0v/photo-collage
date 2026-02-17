@@ -1195,8 +1195,8 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60%;
-  height: 70%;
+  width: 55%;
+  height: 75%;
   border: 5px dashed rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   z-index: 5;
@@ -1208,8 +1208,8 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60%;
-  height: 70%;
+  width: 55%;
+  height: 75%;
   border-radius: 50%;
   overflow: hidden;
   pointer-events: none;
