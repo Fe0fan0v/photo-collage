@@ -1155,12 +1155,14 @@ p {
 .photo-review-wrapper {
   position: relative;
   width: 100%;
-  max-width: 400px;
-  aspect-ratio: 3/4;
-  border-radius: var(--border-radius-lg);
+  flex: 1;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
   overflow: hidden;
   background: #000000;
   margin-bottom: 10px;
+  min-height: 300px;
+  max-height: calc(100vh - 280px);
+  max-height: calc(100dvh - 280px);
 }
 
 .photo-review-image {
@@ -1335,7 +1337,8 @@ p {
   }
 
   .photo-review-wrapper {
-    max-width: 500px;
+    max-height: 600px;
+    aspect-ratio: 4 / 3;
   }
 
   .photo-review-controls {
