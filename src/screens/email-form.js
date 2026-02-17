@@ -48,7 +48,7 @@ export class EmailFormScreen {
       className: 'close-button',
       onClick: () => this.handleClose()
     });
-    closeButton.innerHTML = '×';
+    closeButton.innerHTML = '';
     screen.appendChild(closeButton);
 
     // Content

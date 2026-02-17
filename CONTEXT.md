@@ -241,6 +241,7 @@ sudo certbot certificates
 - [x] Email отправка через SMTP (backend)
   - Перенесено с EmailJS (frontend) на SMTP (backend)
   - Поддержка 2 email адресов в одном запросе
+  - Брендированный HTML-шаблон (SELETTI × DELIGHT плашка, seletti.ru с UTM)
   - Типы клиентов (Частный покупатель, Дизайнер, Дилер, Поставщик)
   - PNG-вложение `seletti-hybrid.png`
   - Конфигурация через env-переменные (SMTP_HOST, SMTP_PORT и т.д.)
@@ -286,6 +287,146 @@ sudo certbot certificates
 2. **Обработка времени** - удаление фона через rembg занимает 10-30 секунд на фото
 3. **Первый запуск backend** - скачивание модели MediaPipe (~5MB) при первом запуске
 4. **OOM Kill** - при высокой нагрузке (несколько одновременных обработок фото) backend может быть убит OOM killer (сервер 3.8 GB RAM)
+
+---
+
+## Изменения (2026-02-17)
+
+### Логотип SELETTI × DELIGHT → ссылка на seletti.ru
+
+- Плашка "SELETTI × DELIGHT" в шапке всех экранов теперь кликабельна
+- Логотип обёрнут в `<a href="http://seletti.ru" target="_blank">`
+- Открывает сайт в новой вкладке
+- Затронуты все 11 экранов: camera, photo-review, photos-ready, plate-select, processing, success, email-form, final, photo-ready, telegram-promo, welcome
+
+### Клик по превью фото на камере → переход на photo-review
+
+#### Проблема
+- На экране камеры клик по превью (thumbnail) фото всегда открывал file picker
+- Не было возможности перейти на экран просмотра/переснятия прямо с камеры
+
+#### Исправление
+- **`src/screens/camera.js`**: `handleThumbnailClick()` переписан
+  - Фото существует (`photos[index]` truthy) → навигация на photo-review
+  - Фото не существует → file picker через `openFilePicker()`
+  - Фото 2 доступно для загрузки только если фото 1 уже есть
+
+### Исправление видеоискателя камеры при повторном открытии
+
+#### Проблема
+- После перехода на photo-review и нажатия "ПЕРЕСНЯТЬ" камера не показывала видеопоток
+- Race condition: `onloadedmetadata` мог уже сработать до установки обработчика
+- Атрибут `autoplay` не срабатывал при повторном монтировании video-элемента на мобильных
+
+#### Исправление
+- **`src/screens/camera.js`**: `startCamera()` доработан
+  - Проверка `readyState >= 1` перед ожиданием `onloadedmetadata`
+  - Явный вызов `videoElement.play()` после готовности метаданных
+
+### Исправление потери фото 2 при переснятии фото 1
+
+#### Проблема
+- `retakePhoto(0)` делал `photos.slice(0, 0)` → удалял ВСЕ фото, включая фото 2
+- При переснятии фото 2 (`slice(0, 1)`) фото 1 сохранялось корректно
+
+#### Исправление
+- **`src/main.js`**: `retakePhoto()` теперь ставит `photos[photoIndex] = null` вместо `slice`
+  - Удаляется только конкретное фото, другое сохраняется
+- **`src/screens/camera.js`**:
+  - Все проверки через `photos[0]`/`photos[1]` вместо `photos.length` (корректная работа с null-слотами)
+  - `handleCapture()` и `handleGallerySelect()` используют прямое присвоение `photos[index] = blob`
+  - Если при переснятии фото 1 фото 2 уже есть → сразу переход на photosReady
+  - `restoreExistingPhotos()` показывает превью обоих фото если они существуют
+
+### Исправление file picker для фото 2 на мобильных
+
+#### Проблема
+- На мобильных браузерах `fileInput2.click()` на заранее созданном скрытом `<input>` не открывал диалог выбора файла
+- File picker для фото 1 работал, для фото 2 — нет
+
+#### Исправление
+- **`src/screens/camera.js`**: новый метод `openFilePicker(photoIndex)`
+  - Создаёт свежий `<input type="file">` в момент клика (в контексте user gesture)
+  - Вешает обработчик `change` → `handleGallerySelect()`
+  - После выбора файла input удаляется из DOM
+  - Убраны предварительно созданные fileInput1/fileInput2 из `render()`
+
+---
+
+## Изменения (2026-02-16 вечер)
+
+### Переход на PNG без потери качества
+
+#### Проблема
+- Фото с камеры сохранялось как JPEG quality 0.9 — заметная потеря качества
+- Финальный коллаж экспортировался как JPEG quality 0.92 — артефакты сжатия
+- Заказчик недоволен качеством изображений
+
+#### Исправление
+- **`src/utils/helpers.js`**: `captureVideoFrame()` — `image/jpeg, 0.9` → `image/png` (без потерь)
+- **`src/services/collage.js`**: `createCollage()` — `image/jpeg, 0.92` → `image/png` (без потерь)
+
+### Исправление письма менеджеру: отсутствовали ID коллажа, дата, ссылка
+
+#### Проблема
+- В письме менеджеру (hybrid@de-light.ru) поля ID коллажа, Дата и время, Ссылка показывали "—"
+- Запросы `save-collage` и `send-email` выполнялись параллельно (`Promise.all`)
+- `collageInfo` из save-collage не успевал попасть в запрос send-email
+
+#### Исправление
+- **`src/screens/email-form.js`**: запросы теперь последовательные
+  - Сначала `save-collage` → получаем `collageId`, `url`, `datetime`
+  - Затем `send-email` с `collageInfo` → менеджер получает полные данные
+
+### Фон страницы: одна картинка вместо плитки
+
+#### Проблема
+- Фоновый паттерн "ёлочка" (`background-pattern.png` 200×200) тайлился (`repeat`) — выглядел как плитка из мелких файлов
+
+#### Исправление
+- **`src/styles/main.css`**: `background-size: 200px auto` + `repeat` → `cover` + `no-repeat` + `fixed`
+- Одна картинка растягивается на весь экран, не скроллится
+
+#### Миграция session persistence на IndexedDB
+- **Причина**: PNG-фото (~2-3 МБ каждое) в base64 превышали лимит sessionStorage (5 МБ)
+- **`src/utils/session-persistence.js`**: полностью переписан
+  - Фото хранятся как Blob напрямую в IndexedDB (лимит 50+ МБ)
+  - Без base64-кодирования — экономнее по памяти
+  - Лёгкие метаданные (экран, тарелка, email) остаются в sessionStorage
+  - API (`saveSession`, `restoreSession`, `clearSession`) не изменился
+
+---
+
+## Изменения (2026-02-16)
+
+### Редизайн шаблона email для клиента
+
+#### Было
+- Тема: "Ваш гибрид от Seletti"
+- Простое HTML-письмо: "Спасибо за участие!", "Ваш уникальный гибрид от Seletti готов.", белый фон
+
+#### Стало
+- Тема: **"Ваш Seletti Hybrid"**
+- Брендированный шаблон (table-based, совместим со всеми email-клиентами):
+  - **Плашка "SELETTI × DELIGHT"** вверху (#f0f0f0 фон) — кликабельная, ведёт на seletti.ru с UTM
+  - **"Ваш Seletti Hybrid"** — белый заголовок h2 на чёрном фоне
+  - **"Ваш уникальный гибрид готов..."** — серый текст (#cccccc)
+  - **"Все коллекции на официальном сайте seletti.ru"** — жёлтая ссылка (#FFED00) с UTM
+  - Футер: "Seletti Russia"
+- UTM-ссылка: `http://seletti.ru?utm_source=hybridpic&utm_medium=email&utm_campaign=hybappseletti`
+- Затронутый файл: **`backend/email_service.py`** (`_build_message()`)
+
+### Исправление дублирования строк в Google Sheets
+
+#### Проблема
+- При отправке коллажа с 2 получателями `/save-collage` создавал **2 одинаковые строки** в таблице
+- Каждый recipient → отдельная строка с тем же collage ID, датой и URL
+
+#### Исправление
+- **`backend/main.py`**: одна строка в Google Sheets на сессию коллажа
+- Email'ы нескольких получателей объединяются через запятую: `email1@mail.ru, email2@mail.ru`
+- Типы клиентов аналогично: `Дилер, Дизайнер`
+- Результат: одна ссылка на коллаж = одна строка в таблице
 
 ---
 

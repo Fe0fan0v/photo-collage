@@ -251,7 +251,7 @@ export class FinalScreen {
       className: 'tg-popup-close',
       onClick: () => this.closePopup(overlay)
     });
-    closeBtn.innerHTML = '&times;';
+    closeBtn.innerHTML = '';
     overlay.appendChild(closeBtn);
 
     // "Готово!" title
