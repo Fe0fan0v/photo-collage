@@ -60,12 +60,12 @@ export class SuccessScreen {
     actions.appendChild(emailButton);
 
     // Print at stand button
-    const printButton = createElement('button', {
+    this.printButton = createElement('button', {
       className: 'btn btn-primary btn-success-main',
       onClick: () => this.handlePrint()
     });
-    printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
-    actions.appendChild(printButton);
+    this.printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
+    actions.appendChild(this.printButton);
 
     // Start over button (small, but same style)
     const restartButton = createElement('button', {
@@ -106,10 +106,21 @@ export class SuccessScreen {
     this.app.navigateTo('camera');
   }
 
-  mount(params = {}) {
+  async mount(params = {}) {
     // Show confirmation if returning from email form
     if (params.showConfirmation) {
       this.showConfirmation();
+    }
+
+    // Check print button setting
+    try {
+      const res = await fetch('/api/print-button-setting');
+      const data = await res.json();
+      if (!data.enabled && this.printButton) {
+        this.printButton.style.display = 'none';
+      }
+    } catch {
+      // On error, keep button visible
     }
   }
 

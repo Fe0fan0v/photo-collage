@@ -19,6 +19,7 @@ import io
 import asyncio
 import base64
 import os
+import json
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -41,6 +42,20 @@ app.add_middleware(
 # Create uploads directory if it doesn't exist
 UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+# Settings file for print button toggle
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
+TUMBLER_PASSWORD = "Pass"
+
+def load_settings():
+    if os.path.exists(SETTINGS_FILE):
+        with open(SETTINGS_FILE, 'r') as f:
+            return json.load(f)
+    return {"print_button_enabled": True}
+
+def save_settings(settings):
+    with open(SETTINGS_FILE, 'w') as f:
+        json.dump(settings, f)
 
 # Mount static files for serving uploaded collages
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
@@ -386,6 +401,23 @@ async def send_email(data: dict = Body(...)):
 
     except Exception as e:
         return JSONResponse({'success': False, 'message': str(e), 'results': []}, status_code=500)
+
+
+@app.get("/print-button-setting")
+async def get_print_button_setting():
+    settings = load_settings()
+    return {"enabled": settings.get("print_button_enabled", True)}
+
+@app.post("/print-button-setting")
+async def set_print_button_setting(data: dict = Body(...)):
+    password = data.get("password", "")
+    enabled = data.get("enabled", True)
+    if password.lower() != TUMBLER_PASSWORD.lower():
+        return JSONResponse({"success": False, "message": "Неверный пароль"})
+    settings = load_settings()
+    settings["print_button_enabled"] = enabled
+    save_settings(settings)
+    return JSONResponse({"success": True, "enabled": enabled})
 
 
 if __name__ == "__main__":

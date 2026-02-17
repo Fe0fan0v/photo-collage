@@ -15,7 +15,7 @@ export default defineConfig({
       key: fs.readFileSync(keyPath),
       cert: fs.readFileSync(certPath)
     } : false,
-    allowedHosts: ['collage.heliad.ru', 'localhost']
+    allowedHosts: ['collage.heliad.ru', 'seletti-hybrid.de-light.ru', 'localhost']
   },
   preview: {
     host: '0.0.0.0',

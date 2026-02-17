@@ -75,12 +75,12 @@ export class FinalScreen {
     emailButton.textContent = 'ОТПРАВИТЬ НА ПОЧТУ\nВ ХОРОШЕМ КАЧЕСТВЕ';
     actions.appendChild(emailButton);
 
-    const printButton = createElement('button', {
+    this.printButton = createElement('button', {
       className: 'btn btn-primary btn-final-action',
       onClick: () => this.handlePrint()
     });
-    printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
-    actions.appendChild(printButton);
+    this.printButton.textContent = 'РАСПЕЧАТАТЬ\nУ МЕНЕДЖЕРА СТЕНДА';
+    actions.appendChild(this.printButton);
 
     // Start over button (together with other buttons)
     const restartBtn = createElement('button', {
@@ -221,9 +221,20 @@ export class FinalScreen {
     }
   }
 
-  mount(params = {}) {
+  async mount(params = {}) {
     if (params.showTelegramPopup) {
       this.showGotovoPopup();
+    }
+
+    // Check print button setting
+    try {
+      const res = await fetch(`${API_URL}/print-button-setting`);
+      const data = await res.json();
+      if (!data.enabled && this.printButton) {
+        this.printButton.style.display = 'none';
+      }
+    } catch {
+      // On error, keep button visible
     }
   }
 

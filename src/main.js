@@ -181,7 +181,17 @@ class App {
 }
 
 // Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.location.pathname === '/tumbler') {
+    const { TumblerScreen } = await import('./screens/tumbler.js');
+    const tumbler = new TumblerScreen();
+    const container = document.getElementById('app');
+    const el = await tumbler.render();
+    container.appendChild(el);
+    await tumbler.mount();
+    return;
+  }
+
   const app = new App();
   app.init();
 });
