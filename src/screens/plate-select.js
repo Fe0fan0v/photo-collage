@@ -6,13 +6,13 @@
 import { createElement } from '../utils/helpers.js';
 import logoUrl from '../assets/logo.png';
 
-// Import plate thumbnail images (small, fast loading)
-import plate1ThumbUrl from '../assets/plate-1-thumb.png';
-import plate2ThumbUrl from '../assets/plate-2-thumb.png';
-import plate3ThumbUrl from '../assets/plate-3-thumb.png';
-import plate4ThumbUrl from '../assets/plate-4-thumb.png';
-import plate5ThumbUrl from '../assets/plate-5-thumb.png';
-import plate6ThumbUrl from '../assets/plate-6-thumb.png';
+// Import plate thumbnail images (small WebP, fast loading)
+import plate1ThumbUrl from '../assets/plate-1-thumb.webp';
+import plate2ThumbUrl from '../assets/plate-2-thumb.webp';
+import plate3ThumbUrl from '../assets/plate-3-thumb.webp';
+import plate4ThumbUrl from '../assets/plate-4-thumb.webp';
+import plate5ThumbUrl from '../assets/plate-5-thumb.webp';
+import plate6ThumbUrl from '../assets/plate-6-thumb.webp';
 
 const PLATES = [
   { id: 0, name: 'Фон 1', url: plate1ThumbUrl },
