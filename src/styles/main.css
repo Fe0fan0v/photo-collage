@@ -153,7 +153,7 @@ p {
   font-size: 1.1rem;
   font-weight: 600;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: 25px;
   cursor: pointer;
   transition: all var(--transition);
   min-height: 56px;
@@ -1324,6 +1324,8 @@ p {
   min-width: auto;
   font-size: 1rem;
   align-self: center;
+  margin-top: 10px;
+  margin-bottom: 20px;
 }
 
 /* Desktop photo review */
