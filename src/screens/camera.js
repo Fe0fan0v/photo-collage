@@ -319,7 +319,11 @@ export class CameraScreen {
   }
 
   handleThumbnailClick(photoIndex) {
-    this.openFilePicker(photoIndex);
+    // Always navigate to photo-review screen for this photo
+    // If photo doesn't exist yet, photo-review will show empty state
+    // and the user can retake (open camera) or pick from gallery via thumbnail there
+    this.stopCamera();
+    this.app.navigateTo("photoReview", { photoIndex });
   }
 
   openFilePicker(photoIndex) {
