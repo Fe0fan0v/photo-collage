@@ -258,12 +258,14 @@ export class CameraScreen {
   }
 
   updateThumbnail(container, dataUrl) {
-    container.className = '';
+    container.className = 'photo-placeholder clickable';
     container.innerHTML = '';
     const img = createElement('img', {
       className: 'photo-thumbnail',
-      src: dataUrl
+      src: dataUrl,
+      draggable: 'false'
     });
+    img.style.pointerEvents = 'none';
     container.appendChild(img);
   }
 
