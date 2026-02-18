@@ -102,12 +102,11 @@ export class CameraScreen {
     // Controls
     const controls = createElement('div', { className: 'camera-controls' });
 
-    // Photo 1 thumbnail placeholder (clickable to open gallery)
-    this.photo1Thumbnail = createElement('div', {
-      className: 'photo-placeholder clickable',
-      onClick: () => this.handleThumbnailClick(0)
-    });
+    // Photo 1 thumbnail placeholder (clickable to open gallery or review)
+    this.photo1Thumbnail = createElement('div', { className: 'photo-placeholder clickable' });
+    this.photo1Thumbnail.setAttribute('data-photo', '0');
     this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
+    this.photo1Thumbnail.onclick = () => this.handleThumbnailClick(0);
     controls.appendChild(this.photo1Thumbnail);
 
     // Capture button
@@ -117,12 +116,11 @@ export class CameraScreen {
     });
     controls.appendChild(captureButton);
 
-    // Photo 2 thumbnail placeholder (clickable to open gallery)
-    this.photo2Thumbnail = createElement('div', {
-      className: 'photo-placeholder clickable',
-      onClick: () => this.handleThumbnailClick(1)
-    });
+    // Photo 2 thumbnail placeholder (clickable to open gallery or review)
+    this.photo2Thumbnail = createElement('div', { className: 'photo-placeholder clickable' });
+    this.photo2Thumbnail.setAttribute('data-photo', '1');
     this.photo2Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 2<br>Загрузь</span>';
+    this.photo2Thumbnail.onclick = () => this.handleThumbnailClick(1);
     controls.appendChild(this.photo2Thumbnail);
 
     screen.appendChild(controls);
@@ -258,6 +256,7 @@ export class CameraScreen {
   }
 
   updateThumbnail(container, dataUrl) {
+    const photoIndex = parseInt(container.getAttribute('data-photo'));
     container.className = 'photo-placeholder clickable';
     container.innerHTML = '';
     const img = createElement('img', {
@@ -265,8 +264,9 @@ export class CameraScreen {
       src: dataUrl,
       draggable: 'false'
     });
-    img.style.pointerEvents = 'none';
     container.appendChild(img);
+    // Re-assign onclick to guarantee it works after innerHTML replacement
+    container.onclick = () => this.handleThumbnailClick(photoIndex);
   }
 
   updateHalfOverlay() {

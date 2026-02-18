@@ -39,6 +39,7 @@ class App {
     };
 
     this.currentScreen = null;
+    this._navCounter = 0;
   }
 
   /**
@@ -61,10 +62,16 @@ class App {
    * @param {Object} params - Optional parameters to pass to the screen
    */
   async navigateTo(screenName, params = {}) {
+    // Guard against concurrent navigations (e.g. user taps while mount() is still running)
+    const navId = ++this._navCounter;
+
     // Cleanup current screen
     if (this.currentScreen) {
       await this.currentScreen.cleanup?.();
     }
+
+    // Abort if a newer navigation was started while we were cleaning up
+    if (navId !== this._navCounter) return;
 
     // Clear container
     this.container.innerHTML = '';
@@ -80,13 +87,19 @@ class App {
 
     // Render and mount new screen
     const element = await screen.render(params);
+
+    // Abort if a newer navigation was started while we were rendering
+    if (navId !== this._navCounter) return;
+
     this.container.appendChild(element);
 
     // Initialize screen with params
     await screen.mount?.(params);
 
-    // Persist state to sessionStorage (survives phone lock / reload)
-    saveSession(screenName, this.state);
+    // Only save session if this is still the active navigation
+    if (navId === this._navCounter) {
+      saveSession(screenName, this.state);
+    }
   }
 
   /**

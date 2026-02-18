@@ -623,6 +623,14 @@ p {
   transform: scale(1.05);
 }
 
+/* All children must not intercept clicks/taps — clicks always go to the container */
+.photo-placeholder > * {
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .photo-placeholder span {
   color: #ffffff;
   font-size: 11px;
