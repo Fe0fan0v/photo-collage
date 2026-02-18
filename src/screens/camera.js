@@ -4,9 +4,14 @@
  * Shows vertical guide line for face alignment
  */
 
-import { createElement, captureVideoFrame, blobToBase64, loadImage } from '../utils/helpers.js';
-import { processFace, preloadModel } from '../services/background-removal.js';
-import logoUrl from '../assets/logo.png';
+import {
+  createElement,
+  captureVideoFrame,
+  blobToBase64,
+  loadImage,
+} from "../utils/helpers.js";
+import { processFace, preloadModel } from "../services/background-removal.js";
+import logoUrl from "../assets/logo.png";
 
 export class CameraScreen {
   constructor(app) {
@@ -30,58 +35,71 @@ export class CameraScreen {
       this.currentPhotoIndex = 0;
     }
 
-    const screen = createElement('div', { className: 'screen screen-camera' });
+    const screen = createElement("div", { className: "screen screen-camera" });
 
     // Logo header
-    const header = createElement('div', { className: 'logo-header' });
-    const logoLink = createElement('a', { href: 'http://seletti.ru?utm_source=hybridpic&utm_medium=refferal&utm_campaign=hybappseletti', target: '_blank' });
-    const logo = createElement('img', {
-      className: 'logo-image',
+    const header = createElement("div", { className: "logo-header" });
+    const logoLink = createElement("a", {
+      href: "http://seletti.ru?utm_source=hybridpic&utm_medium=refferal&utm_campaign=hybappseletti",
+      target: "_blank",
+    });
+    const logo = createElement("img", {
+      className: "logo-image",
       src: logoUrl,
-      alt: 'SELETTI × DELIGHT'
+      alt: "SELETTI × DELIGHT",
     });
     logoLink.appendChild(logo);
     header.appendChild(logoLink);
     screen.appendChild(header);
 
     // Title banner
-    const titleBanner = createElement('h1', { className: 'camera-banner' });
-    titleBanner.textContent = 'Создай свой Hybrid';
+    const titleBanner = createElement("h1", { className: "camera-banner" });
+    titleBanner.textContent = "Создай свой Hybrid";
     screen.appendChild(titleBanner);
 
     // Camera container
-    const cameraContainer = createElement('div', { className: 'camera-container' });
+    const cameraContainer = createElement("div", {
+      className: "camera-container",
+    });
 
     // Video element
-    this.videoElement = createElement('video', {
-      className: 'camera-video',
-      autoplay: 'true',
-      playsinline: 'true',
-      muted: 'true'
+    this.videoElement = createElement("video", {
+      className: "camera-video",
+      autoplay: "true",
+      playsinline: "true",
+      muted: "true",
     });
     cameraContainer.appendChild(this.videoElement);
 
     // Face guide overlay
-    const overlay = createElement('div', { className: 'camera-overlay' });
+    const overlay = createElement("div", { className: "camera-overlay" });
 
     // Photo 1 preview (shown only when taking photo 2)
-    this.photo1Preview = createElement('div', { className: 'camera-photo1-preview hidden' });
+    this.photo1Preview = createElement("div", {
+      className: "camera-photo1-preview hidden",
+    });
     overlay.appendChild(this.photo1Preview);
 
     // Vertical center line
-    const centerLine = createElement('div', { className: 'camera-center-line' });
+    const centerLine = createElement("div", {
+      className: "camera-center-line",
+    });
     overlay.appendChild(centerLine);
 
     // Face oval guide
-    this.faceGuide = createElement('div', { className: 'camera-face-guide' });
+    this.faceGuide = createElement("div", { className: "camera-face-guide" });
     overlay.appendChild(this.faceGuide);
 
     // Half overlay for shading (left or right side)
-    this.halfOverlay = createElement('div', { className: 'camera-half-overlay right' });
+    this.halfOverlay = createElement("div", {
+      className: "camera-half-overlay right",
+    });
     overlay.appendChild(this.halfOverlay);
 
     // Success checkmark animation (hidden by default)
-    this.successCheckmark = createElement('div', { className: 'camera-success-checkmark' });
+    this.successCheckmark = createElement("div", {
+      className: "camera-success-checkmark",
+    });
     this.successCheckmark.innerHTML = `
       <svg viewBox="0 0 52 52">
         <polyline points="14 27 22 35 38 19" />
@@ -93,40 +111,53 @@ export class CameraScreen {
     screen.appendChild(cameraContainer);
 
     // Instruction text under camera
-    const instructionContainer = createElement('div', { className: 'camera-instruction' });
-    this.instructionText = createElement('span', { className: 'camera-instruction-text' });
-    this.instructionText.textContent = 'Поместите лицо в овал. Разделение произойдет по желтой линии';
+    const instructionContainer = createElement("div", {
+      className: "camera-instruction",
+    });
+    this.instructionText = createElement("span", {
+      className: "camera-instruction-text",
+    });
+    this.instructionText.textContent =
+      "Поместите лицо в овал. Разделение произойдет по желтой линии";
     instructionContainer.appendChild(this.instructionText);
     screen.appendChild(instructionContainer);
 
     // Controls
-    const controls = createElement('div', { className: 'camera-controls' });
+    const controls = createElement("div", { className: "camera-controls" });
 
     // Photo 1 thumbnail placeholder (clickable to open gallery or review)
-    this.photo1Thumbnail = createElement('div', { className: 'photo-placeholder clickable' });
-    this.photo1Thumbnail.setAttribute('data-photo', '0');
-    this.photo1Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
+    this.photo1Thumbnail = createElement("div", {
+      className: "photo-placeholder clickable",
+    });
+    this.photo1Thumbnail.setAttribute("data-photo", "0");
+    this.photo1Thumbnail.innerHTML =
+      '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 1<br>Загрузь</span>';
     this.photo1Thumbnail.onclick = () => this.handleThumbnailClick(0);
     controls.appendChild(this.photo1Thumbnail);
 
     // Capture button
-    const captureButton = createElement('button', {
-      className: 'btn btn-capture',
-      onClick: () => this.handleCapture()
+    const captureButton = createElement("button", {
+      className: "btn btn-capture",
+      onClick: () => this.handleCapture(),
     });
     controls.appendChild(captureButton);
 
     // Photo 2 thumbnail placeholder (clickable to open gallery or review)
-    this.photo2Thumbnail = createElement('div', { className: 'photo-placeholder clickable' });
-    this.photo2Thumbnail.setAttribute('data-photo', '1');
-    this.photo2Thumbnail.innerHTML = '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 2<br>Загрузь</span>';
+    this.photo2Thumbnail = createElement("div", {
+      className: "photo-placeholder clickable",
+    });
+    this.photo2Thumbnail.setAttribute("data-photo", "1");
+    this.photo2Thumbnail.innerHTML =
+      '<span style="font-size:9px;color:var(--text-color);line-height:1.2;text-align:center;">Фото 2<br>Загрузь</span>';
     this.photo2Thumbnail.onclick = () => this.handleThumbnailClick(1);
     controls.appendChild(this.photo2Thumbnail);
 
     screen.appendChild(controls);
 
     // Error container (hidden by default)
-    this.errorContainer = createElement('div', { className: 'error-message hidden' });
+    this.errorContainer = createElement("div", {
+      className: "error-message hidden",
+    });
     screen.insertBefore(this.errorContainer, screen.firstChild);
 
     return screen;
@@ -137,17 +168,21 @@ export class CameraScreen {
     try {
       await this.startCamera();
     } catch (error) {
-      this.showError('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ и обновите страницу.');
-      console.error('Camera access error:', error);
+      this.showError(
+        "Не удалось получить доступ к камере. Пожалуйста, разрешите доступ и обновите страницу.",
+      );
+      console.error("Camera access error:", error);
     }
 
     // Restore existing photos (thumbnails etc.) without blocking camera
     this.restoreExistingPhotos();
 
     // Check API availability in background
-    preloadModel().then(apiAvailable => {
+    preloadModel().then((apiAvailable) => {
       if (!apiAvailable) {
-        this.showError('⚠️ Backend сервер не отвечает. Обработка фото будет недоступна.');
+        this.showError(
+          "⚠️ Backend сервер не отвечает. Обработка фото будет недоступна.",
+        );
       }
     });
   }
@@ -167,11 +202,13 @@ export class CameraScreen {
       this.updateThumbnail(this.photo1Thumbnail, photo1DataUrl);
 
       // Process photo 1 in background (non-blocking)
-      processFace(photos[0]).then(processed => {
-        this.photo1FaceData = processed;
-      }).catch(error => {
-        console.error('Failed to process photo 1 for preview:', error);
-      });
+      processFace(photos[0])
+        .then((processed) => {
+          this.photo1FaceData = processed;
+        })
+        .catch((error) => {
+          console.error("Failed to process photo 1 for preview:", error);
+        });
     }
 
     // Restore photo 2 thumbnail if it exists
@@ -187,11 +224,11 @@ export class CameraScreen {
   async startCamera() {
     const constraints = {
       video: {
-        facingMode: 'user',
+        facingMode: "user",
         width: { ideal: 1280 },
-        height: { ideal: 720 }
+        height: { ideal: 720 },
       },
-      audio: false
+      audio: false,
     };
 
     this.stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -210,7 +247,7 @@ export class CameraScreen {
 
   stopCamera() {
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach((track) => track.stop());
       this.stream = null;
     }
   }
@@ -239,7 +276,7 @@ export class CameraScreen {
 
         // If photo 2 already exists (retake scenario), go to photos ready
         if (photos[1]) {
-          this.app.navigateTo('photosReady');
+          this.app.navigateTo("photosReady");
         } else {
           this.currentPhotoIndex = 1;
           this.updateHalfOverlay();
@@ -247,22 +284,22 @@ export class CameraScreen {
       } else {
         // Second photo captured
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
-        this.app.navigateTo('photosReady');
+        this.app.navigateTo("photosReady");
       }
     } catch (error) {
-      this.showError('Ошибка при захвате фото. Попробуйте еще раз.');
-      console.error('Photo capture error:', error);
+      this.showError("Ошибка при захвате фото. Попробуйте еще раз.");
+      console.error("Photo capture error:", error);
     }
   }
 
   updateThumbnail(container, dataUrl) {
-    const photoIndex = parseInt(container.getAttribute('data-photo'));
-    container.className = 'photo-placeholder clickable';
-    container.innerHTML = '';
-    const img = createElement('img', {
-      className: 'photo-thumbnail',
+    const photoIndex = parseInt(container.getAttribute("data-photo"));
+    container.className = "photo-placeholder clickable";
+    container.innerHTML = "";
+    const img = createElement("img", {
+      className: "photo-thumbnail",
       src: dataUrl,
-      draggable: 'false'
+      draggable: "false",
     });
     container.appendChild(img);
     // Re-assign onclick to guarantee it works after innerHTML replacement
@@ -274,44 +311,29 @@ export class CameraScreen {
 
     if (this.currentPhotoIndex === 0) {
       // First photo - shade right half
-      this.halfOverlay.className = 'camera-half-overlay right';
+      this.halfOverlay.className = "camera-half-overlay right";
     } else {
       // Second photo - shade left half
-      this.halfOverlay.className = 'camera-half-overlay left';
+      this.halfOverlay.className = "camera-half-overlay left";
     }
   }
 
   handleThumbnailClick(photoIndex) {
-    const photos = this.app.getPhotos();
-
-    if (photoIndex === 0) {
-      if (photos[0]) {
-        this.app.navigateTo('photoReview', { photoIndex: 0 });
-      } else {
-        this.openFilePicker(0);
-      }
-    } else if (photoIndex === 1) {
-      if (photos[1]) {
-        this.app.navigateTo('photoReview', { photoIndex: 1 });
-      } else {
-        this.openFilePicker(1);
-      }
-    }
+    this.openFilePicker(photoIndex);
   }
 
   openFilePicker(photoIndex) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.style.display = 'none';
-    input.addEventListener('change', (e) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.style.display = "none";
+    input.addEventListener("change", (e) => {
       this.handleGallerySelect(e, photoIndex);
       input.remove();
     });
     document.body.appendChild(input);
     input.click();
   }
-
 
   async processPhoto1ForPreview(photoBlob) {
     // Process photo 1 in background (for later use in collage)
@@ -320,7 +342,7 @@ export class CameraScreen {
       const processed = await processFace(photoBlob);
       this.photo1FaceData = processed;
     } catch (error) {
-      console.error('Failed to process photo 1 for preview:', error);
+      console.error("Failed to process photo 1 for preview:", error);
     }
   }
 
@@ -346,7 +368,7 @@ export class CameraScreen {
 
           // If photo 2 already exists (retake scenario), go to photos ready
           if (photos[1]) {
-            this.app.navigateTo('photosReady');
+            this.app.navigateTo("photosReady");
           } else {
             this.currentPhotoIndex = 1;
             this.updateHalfOverlay();
@@ -358,33 +380,33 @@ export class CameraScreen {
       } else if (photoIndex === 1) {
         this.updateThumbnail(this.photo2Thumbnail, photoDataUrl);
         // Navigate to photos ready
-        this.app.navigateTo('photosReady');
+        this.app.navigateTo("photosReady");
       }
 
-      event.target.value = '';
+      event.target.value = "";
     } catch (error) {
-      console.error('Error handling gallery selection:', error);
-      this.showError('Не удалось загрузить фото из галереи');
+      console.error("Error handling gallery selection:", error);
+      this.showError("Не удалось загрузить фото из галереи");
     }
   }
 
   showSuccessAnimation() {
     // Show checkmark animation
     if (this.successCheckmark) {
-      this.successCheckmark.classList.add('show');
+      this.successCheckmark.classList.add("show");
 
       // Hide after animation
       setTimeout(() => {
-        this.successCheckmark.classList.remove('show');
+        this.successCheckmark.classList.remove("show");
       }, 1000);
     }
 
     // Add pulsing animation to face guide
     if (this.faceGuide) {
-      this.faceGuide.classList.add('processing');
+      this.faceGuide.classList.add("processing");
 
       setTimeout(() => {
-        this.faceGuide.classList.remove('processing');
+        this.faceGuide.classList.remove("processing");
       }, 1000);
     }
   }
@@ -392,17 +414,18 @@ export class CameraScreen {
   showProcessingIndicator() {
     // Show text indicator
     if (this.instructionText) {
-      this.instructionText.innerHTML = '<span style="opacity: 0.7">⏳ Обработка...</span>';
+      this.instructionText.innerHTML =
+        '<span style="opacity: 0.7">⏳ Обработка...</span>';
     }
 
     // Add pulsing animation to face guide
     if (this.faceGuide) {
-      this.faceGuide.classList.add('processing');
+      this.faceGuide.classList.add("processing");
     }
 
     // Show checkmark animation
     if (this.successCheckmark) {
-      this.successCheckmark.classList.add('show');
+      this.successCheckmark.classList.add("show");
     }
   }
 
@@ -412,13 +435,13 @@ export class CameraScreen {
 
     // Remove pulsing animation from face guide
     if (this.faceGuide) {
-      this.faceGuide.classList.remove('processing');
+      this.faceGuide.classList.remove("processing");
     }
 
     // Hide checkmark after a delay (keep it visible for a moment)
     if (this.successCheckmark) {
       setTimeout(() => {
-        this.successCheckmark.classList.remove('show');
+        this.successCheckmark.classList.remove("show");
       }, 500);
     }
   }
@@ -428,11 +451,14 @@ export class CameraScreen {
 
     try {
       // Create canvas with cropped face only
-      const croppedFace = await this.createCroppedFaceCanvas(imageUrl, faceInfo);
+      const croppedFace = await this.createCroppedFaceCanvas(
+        imageUrl,
+        faceInfo,
+      );
       this.photo1Preview.style.backgroundImage = `url(${croppedFace})`;
-      this.photo1Preview.classList.remove('hidden');
+      this.photo1Preview.classList.remove("hidden");
     } catch (error) {
-      console.error('Failed to create cropped face preview:', error);
+      console.error("Failed to create cropped face preview:", error);
     }
   }
 
@@ -468,15 +494,15 @@ export class CameraScreen {
     }
 
     // Create canvas with LEFT HALF of face only
-    const canvas = document.createElement('canvas');
-    canvas.width = faceW / 2;  // Only left half
+    const canvas = document.createElement("canvas");
+    canvas.width = faceW / 2; // Only left half
     canvas.height = faceH;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     // Draw only left half of the cropped face
     ctx.drawImage(img, faceX, faceY, faceW / 2, faceH, 0, 0, faceW / 2, faceH);
 
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL("image/png");
   }
 
   /**
@@ -487,10 +513,10 @@ export class CameraScreen {
     const FACE_WIDTH = 580;
     const FACE_HEIGHT = 720;
 
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = FACE_WIDTH;
     canvas.height = FACE_HEIGHT;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     // Load the processed image
     const img = await loadImage(imageDataUrl);
@@ -555,7 +581,7 @@ export class CameraScreen {
         eyeCenterY,
         eyeDistance,
         imgWidth,
-        imgHeight
+        imgHeight,
       };
     }
 
@@ -574,13 +600,13 @@ export class CameraScreen {
       eyeCenterY: fallbackFaceY + fallbackFaceH * 0.35,
       eyeDistance: fallbackFaceW * 0.4,
       imgWidth,
-      imgHeight
+      imgHeight,
     };
   }
 
   showError(message) {
     this.errorContainer.textContent = message;
-    this.errorContainer.classList.remove('hidden');
+    this.errorContainer.classList.remove("hidden");
   }
 
   cleanup() {
