@@ -30,6 +30,11 @@ export class PhotosReadyScreen {
     // Title banner
     const titleBanner = createElement('h1', { className: 'photos-ready-banner' });
     titleBanner.textContent = 'Создай свой Hybrid';
+    titleBanner.style.cursor = 'pointer';
+    titleBanner.addEventListener('click', () => {
+      this.app.reset();
+      this.app.navigateTo('camera');
+    });
     screen.appendChild(titleBanner);
 
     // Content container
