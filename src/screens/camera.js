@@ -245,6 +245,19 @@ export class CameraScreen {
     await this.videoElement.play();
   }
 
+  /**
+   * Restart camera stream (e.g. after returning from background)
+   */
+  async restartCamera() {
+    if (!this.videoElement) return;
+    this.stopCamera();
+    try {
+      await this.startCamera();
+    } catch (error) {
+      console.error("Failed to restart camera:", error);
+    }
+  }
+
   stopCamera() {
     if (this.stream) {
       this.stream.getTracks().forEach((track) => track.stop());

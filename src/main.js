@@ -3,26 +3,30 @@
  * Creates plate-framed face mashup from two people's photos
  */
 
-import { CameraScreen } from './screens/camera.js';
-import { PhotoReadyScreen } from './screens/photo-ready.js';
-import { PhotoReviewScreen } from './screens/photo-review.js';
-import { PhotosReadyScreen } from './screens/photos-ready.js';
-import { PlateSelectScreen } from './screens/plate-select.js';
-import { ProcessingScreen } from './screens/processing.js';
-import { EmailFormScreen } from './screens/email-form.js';
-import { SuccessScreen } from './screens/success.js';
-import { TelegramPromoScreen } from './screens/telegram-promo.js';
-import { FinalScreen } from './screens/final.js';
-import { saveSession, restoreSession, clearSession } from './utils/session-persistence.js';
+import { CameraScreen } from "./screens/camera.js";
+import { PhotoReadyScreen } from "./screens/photo-ready.js";
+import { PhotoReviewScreen } from "./screens/photo-review.js";
+import { PhotosReadyScreen } from "./screens/photos-ready.js";
+import { PlateSelectScreen } from "./screens/plate-select.js";
+import { ProcessingScreen } from "./screens/processing.js";
+import { EmailFormScreen } from "./screens/email-form.js";
+import { SuccessScreen } from "./screens/success.js";
+import { TelegramPromoScreen } from "./screens/telegram-promo.js";
+import { FinalScreen } from "./screens/final.js";
+import {
+  saveSession,
+  restoreSession,
+  clearSession,
+} from "./utils/session-persistence.js";
 
 class App {
   constructor() {
-    this.container = document.getElementById('app');
+    this.container = document.getElementById("app");
     this.state = {
       photos: [], // Array of captured photo Blobs [left, right]
       selectedPlate: null, // Selected plate index (0, 1, 2)
       collageDataUrl: null, // Final collage as data URL
-      emails: [] // Array of {email, customerType} objects
+      emails: [], // Array of {email, customerType} objects
     };
 
     this.screens = {
@@ -35,11 +39,19 @@ class App {
       emailForm: new EmailFormScreen(this),
       success: new SuccessScreen(this),
       telegramPromo: new TelegramPromoScreen(this),
-      final: new FinalScreen(this)
+      final: new FinalScreen(this),
     };
 
     this.currentScreen = null;
+    this.currentScreenName = null;
     this._navCounter = 0;
+
+    // Handle returning from background (phone lock, tab switch, app switch)
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        this.handleResume();
+      }
+    });
   }
 
   /**
@@ -52,8 +64,28 @@ class App {
       this.state = saved.state;
       this.navigateTo(saved.screen);
     } else {
-      this.navigateTo('camera');
+      this.navigateTo("camera");
     }
+  }
+
+  /**
+   * Handle returning from background (visibilitychange → visible)
+   * Restarts camera if on camera screen, otherwise re-renders current screen
+   */
+  async handleResume() {
+    if (!this.currentScreen) return;
+
+    if (this.currentScreenName === "camera") {
+      // Camera stream dies when app goes to background — restart it
+      if (this.currentScreen.restartCamera) {
+        this.currentScreen.restartCamera();
+      }
+    }
+
+    // Force browser repaint — mobile browsers may blank the page after background
+    document.body.style.display = "none";
+    document.body.offsetHeight; // force reflow
+    document.body.style.display = "";
   }
 
   /**
@@ -74,7 +106,7 @@ class App {
     if (navId !== this._navCounter) return;
 
     // Clear container
-    this.container.innerHTML = '';
+    this.container.innerHTML = "";
 
     // Get new screen
     const screen = this.screens[screenName];
@@ -84,6 +116,7 @@ class App {
     }
 
     this.currentScreen = screen;
+    this.currentScreenName = screenName;
 
     // Render and mount new screen
     const element = await screen.render(params);
@@ -128,7 +161,7 @@ class App {
       this.state.photos[photoIndex] = null;
     }
     // Navigate to camera with photo index
-    this.navigateTo('camera', { startPhotoIndex: photoIndex });
+    this.navigateTo("camera", { startPhotoIndex: photoIndex });
   }
 
   /**
@@ -187,18 +220,18 @@ class App {
       photos: [],
       selectedPlate: null,
       collageDataUrl: null,
-      emails: []
+      emails: [],
     };
     clearSession();
   }
 }
 
 // Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
-  if (window.location.pathname === '/tumbler') {
-    const { TumblerScreen } = await import('./screens/tumbler.js');
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.location.pathname === "/tumbler") {
+    const { TumblerScreen } = await import("./screens/tumbler.js");
     const tumbler = new TumblerScreen();
-    const container = document.getElementById('app');
+    const container = document.getElementById("app");
     const el = await tumbler.render();
     container.appendChild(el);
     await tumbler.mount();
