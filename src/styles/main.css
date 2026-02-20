@@ -323,18 +323,9 @@ p {
 
 /* Desktop optimizations */
 @media (min-width: 768px) {
-  .camera-container {
-    max-height: calc(100dvh - 280px);
-    aspect-ratio: 3 / 4;
-  }
-
   .screen {
     max-width: 700px;
     padding: 30px;
-  }
-
-  .screen-camera {
-    max-width: 480px;
   }
 
   .btn {
@@ -564,6 +555,23 @@ p {
 .camera-banner {
   margin: 0;
   margin-bottom: 0;
+}
+
+/* Desktop camera: fit full viewport height, width follows aspect ratio */
+@media (min-width: 768px) {
+  .screen-camera {
+    max-width: 480px;
+  }
+
+  .camera-container {
+    flex: none;
+    width: auto;
+    height: calc(100dvh - 280px);
+    aspect-ratio: 3 / 4;
+    max-height: none;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 /* Camera instruction text */
