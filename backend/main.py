@@ -25,7 +25,6 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import secrets
 
-from google_services import google_services
 from email_service import email_service
 
 app = FastAPI(title="Background Removal API")
@@ -279,14 +278,12 @@ async def process_face(file: UploadFile = File(...)):
 @app.post("/save-collage")
 async def save_collage(data: dict = Body(...)):
     """
-    Save collage image to Google Drive and Google Sheets
-    Expects JSON with 'image', 'email', 'customerType' fields
+    Save collage image locally
+    Expects JSON with 'image' field
     Returns JSON with 'url' and 'collageId'
     """
     try:
         image_data = data.get('image', '')
-        email = data.get('email', '')
-        customer_type = data.get('customerType', '')
 
         if not image_data:
             raise HTTPException(status_code=400, detail="No image data provided")
@@ -303,54 +300,21 @@ async def save_collage(data: dict = Body(...)):
         random_suffix = secrets.token_hex(4)
         filename = f"collage_{timestamp}_{random_suffix}.png"
 
-        # Save locally as backup
+        # Save locally
         filepath = os.path.join(UPLOADS_DIR, filename)
         with open(filepath, 'wb') as f:
             f.write(image_bytes)
 
-        local_url = f"/uploads/{filename}"
+        public_url = f"{os.getenv('PUBLIC_URL', 'https://seletti-hybrid.de-light.ru')}/uploads/{filename}"
 
-        # Try to upload to Google Drive
-        drive_url = None
-        if google_services.is_configured():
-            drive_url = google_services.upload_to_drive(image_bytes, filename)
-
-        # Use Drive URL if available, otherwise use local URL
-        public_url = drive_url if drive_url else f"{os.getenv('PUBLIC_URL', 'https://collage.heliad.ru')}{local_url}"
-
-        # Get next collage ID and save to Google Sheets
-        collage_id = google_services.get_next_collage_id()
-
-        # Support multiple recipients (or single email for backward compat)
-        recipients = data.get('recipients', [])
-        if not recipients and email:
-            recipients = [{'email': email, 'customerType': customer_type}]
-
-        if google_services.is_configured() and recipients:
-            # Format datetime for Russian locale (Moscow timezone)
-            datetime_str = datetime.now(ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y %H:%M:%S')
-
-            # One row per recipient, same collage ID; photo link only on first row
-            for idx, r in enumerate(recipients):
-                r_email = r.get('email', '')
-                if not r_email:
-                    continue
-                success = google_services.append_to_sheet({
-                    'collage_id': collage_id,
-                    'datetime': datetime_str,
-                    'email': r_email,
-                    'customer_type': r.get('customerType', ''),
-                    'collage_url': public_url if idx == 0 else ''
-                })
-                if not success:
-                    print(f"Warning: Failed to save to Google Sheets for {r_email}")
+        # Simple collage ID from timestamp
+        collage_id = int(datetime.now(ZoneInfo('Europe/Moscow')).strftime('%y%m%d%H%M%S'))
 
         return JSONResponse({
             "success": True,
             "url": public_url,
             "collageId": collage_id,
-            "filename": filename,
-            "savedToSheets": google_services.is_configured()
+            "filename": filename
         })
 
     except Exception as e:
